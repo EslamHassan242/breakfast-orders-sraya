@@ -160,7 +160,7 @@ export default function Home() {
           type="text"
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
-          placeholder="Enter your name"
+          
         />
 
         <label>Item</label>
@@ -234,7 +234,7 @@ export default function Home() {
 
         <div className="actions">
           <button onClick={saveOrder} disabled={order.length === 0 || saving}>
-            {saving ? "Saving..." : `Save Order (${currency(total())})`}
+            {saving ? "Saving..." : `Save Order`}
           </button>
         </div>
       </div>
