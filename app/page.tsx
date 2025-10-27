@@ -120,7 +120,10 @@ export default function Home() {
           p.id === item.id ? { ...p, qty: p.qty + q } : p
         );
       }
-      return [...prev, { id: item.id, name: item.name, price: item.price, qty: q }];
+      return [
+        ...prev,
+        { id: item.id, name: item.name, price: item.price, qty: q },
+      ];
     });
   }
 
@@ -227,7 +230,13 @@ export default function Home() {
                     </div>
                   </td>
                   <td>
-                    <button onClick={() => removeItem(o.id)}>Remove</button>
+                    <button
+                      className="remove-btn"
+                      onClick={() => removeItem(o.id)}
+                    >
+                      <span className="desktop-text">Remove</span>
+                      <span className="mobile-icon">🗑️</span>
+                    </button>
                   </td>
                 </tr>
               ))}

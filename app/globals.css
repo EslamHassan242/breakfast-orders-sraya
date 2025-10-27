@@ -127,8 +127,21 @@ footer {
   text-align: center;
   margin-top: 8px;
 }
+.mobile-icon {
+  display: none;
+}
+
+
 
 @media (max-width: 480px) {
+
+ .desktop-text {
+    display: none;
+  }
+  .mobile-icon {
+    display: inline;
+  }
+
   body {
     padding: 8px;
   }
@@ -144,8 +157,50 @@ footer {
   .actions button {
     flex: 1;
   }
-  .order-table th:nth-child(3),
-  .order-table td:nth-child(3) {
+
+  /* Make order table more compact */
+  .order-table th,
+  .order-table td {
+    padding: 6px;
+    font-size: 0.9rem;
+  }
+
+  /* Instead of hiding remove button completely, make it icon-style */
+  .order-table td button {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    min-width: auto;
+  }
+
+  /* Optional: stack order table rows on mobile */
+  .order-table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Let user scroll horizontally if needed */
+  .order-table thead {
     display: none;
   }
+
+  .order-table tr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding: 8px 0;
+  }
+
+  .order-table td {
+    border: none;
+    padding: 4px 6px;
+    flex: 1;
+    text-align: left;
+  }
+
+  .order-table td:last-child {
+    flex: 0 0 auto;
+  }
 }
+
