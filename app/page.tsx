@@ -16,6 +16,79 @@ export default function Home() {
   const [customer, setCustomer] = useState("");
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
+  const [sellers, setSellers] = useState<any[]>([]);
+const [voteCounts, setVoteCounts] = useState<Record<number, number>>({});
+const [selectedSeller, setSelectedSeller] = useState<number | null>(null);
+const [votedToday, setVotedToday] = useState(false);
+const [loadingVotes, setLoadingVotes] = useState(true);
+
+useEffect(() => {
+  loadSellersAndVotes();
+}, []);
+
+async function loadSellersAndVotes() {
+  setLoadingVotes(true);
+  const { data: sellersData } = await supabase.from("sellers").select("*");
+  setSellers(sellersData || []);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const { data: votesData } = await supabase
+    .from("votes")
+    .select("seller_id")
+    .gte("created_at", today.toISOString());
+
+  // count votes per seller
+  const counts: Record<number, number> = {};
+  votesData?.forEach((v) => {
+    counts[v.seller_id] = (counts[v.seller_id] || 0) + 1;
+  });
+  setVoteCounts(counts);
+
+  // prevent re-voting if already voted today
+  const lastVoteDay = localStorage.getItem("lastVoteDay");
+  const todayKey = today.toDateString();
+  if (lastVoteDay === todayKey) setVotedToday(true);
+
+  setLoadingVotes(false);
+}
+
+async function confirmVote() {
+  if (!selectedSeller) return alert("Select a seller to vote for.");
+
+  const todayKey = new Date().toDateString();
+  if (votedToday) return alert("You already voted today!");
+
+  const voterId = await getDeviceId(); // simple local device id
+
+  const { error } = await supabase.from("votes").insert([
+    {
+      voter_id: voterId,
+      seller_id: selectedSeller,
+    },
+  ]);
+
+  if (error) {
+    console.error("Vote failed:", error);
+    alert("Failed to submit your vote. Try again.");
+  } else {
+    localStorage.setItem("lastVoteDay", todayKey);
+    setVotedToday(true);
+    loadSellersAndVotes();
+  }
+}
+
+// helper to identify device
+async function getDeviceId() {
+  let id = localStorage.getItem("deviceId");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("deviceId", id);
+  }
+  return id;
+}
+
 
   // ✅ Load menu items + today's orders
   useEffect(() => {
@@ -45,10 +118,6 @@ export default function Home() {
     loadToday();
   }, []);
 
-
-
-
-  
   // ✅ Save order to Supabase
   async function saveOrder() {
     if (order.length === 0) return;
@@ -124,7 +193,10 @@ export default function Home() {
           p.id === item.id ? { ...p, qty: p.qty + q } : p
         );
       }
-      return [...prev, { id: item.id, name: item.name, price: item.price, qty: q }];
+      return [
+        ...prev,
+        { id: item.id, name: item.name, price: item.price, qty: q },
+      ];
     });
   }
 
@@ -169,7 +241,10 @@ export default function Home() {
         />
 
         <label>Item</label>
-        <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
+        <select
+          value={selectedId}
+          onChange={(e) => setSelectedId(e.target.value)}
+        >
           {menu.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
@@ -213,20 +288,34 @@ export default function Home() {
                   <td>{o.name}</td>
                   <td>
                     <div className="qty-control">
-                      <button onClick={() => updateOrderQty(o.id, Math.max(1, o.qty - 1))}>-</button>
+                      <button
+                        onClick={() =>
+                          updateOrderQty(o.id, Math.max(1, o.qty - 1))
+                        }
+                      >
+                        -
+                      </button>
                       <input
                         type="number"
                         min="1"
                         value={o.qty}
                         onChange={(e) =>
-                          updateOrderQty(o.id, Math.max(1, parseInt(e.target.value) || 1))
+                          updateOrderQty(
+                            o.id,
+                            Math.max(1, parseInt(e.target.value) || 1)
+                          )
                         }
                       />
-                      <button onClick={() => updateOrderQty(o.id, o.qty + 1)}>+</button>
+                      <button onClick={() => updateOrderQty(o.id, o.qty + 1)}>
+                        +
+                      </button>
                     </div>
                   </td>
                   <td>
-                    <button className="remove-btn" onClick={() => removeItem(o.id)}>
+                    <button
+                      className="remove-btn"
+                      onClick={() => removeItem(o.id)}
+                    >
                       <span className="desktop-text">Remove</span>
                       <span className="mobile-icon">🗑️</span>
                     </button>
@@ -274,7 +363,10 @@ export default function Home() {
         ) : (
           <div>
             {todayOrders.map((o) => (
-              <div key={o.id} style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}>
+              <div
+                key={o.id}
+                style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
+              >
                 <strong>{o.customer}</strong> —{" "}
                 <small className="muted">
                   {new Date(o.created_at).toLocaleTimeString()}
@@ -290,6 +382,39 @@ export default function Home() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* --- VOTING SECTION --- */}
+      <div className="panel">
+        <h2>⭐ Vote for Today’s Best Seller</h2>
+        {loadingVotes ? (
+          <p>Loading votes...</p>
+        ) : (
+          <div className="voting-section">
+            {sellers.map((s) => {
+              const isSelected = selectedSeller === s.id;
+              return (
+                <div
+                  key={s.id}
+                  className={`vote-card ${isSelected ? "selected" : ""}`}
+                  onClick={() => setSelectedSeller(s.id)}
+                >
+                  <h3>{s.name}</h3>
+                  <p>{voteCounts[s.id] || 0} votes</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="actions">
+          <button
+            onClick={confirmVote}
+            disabled={!selectedSeller || votedToday}
+          >
+            {votedToday ? "Voted Today ✅" : "Confirm Vote"}
+          </button>
+        </div>
       </div>
 
       <footer>

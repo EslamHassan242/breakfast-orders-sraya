@@ -252,6 +252,47 @@ footer {
 }
 
 
+.voting-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.vote-card {
+  background: var(--panel);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.vote-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.vote-card.selected {
+  border-color: var(--accent);
+  background: #e9f8f7;
+}
+
+.vote-card h3 {
+  margin: 6px 0;
+  font-size: 1.1rem;
+  color: #222;
+}
+
+.vote-card p {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+
+
 @media (max-width: 480px) {
 
  .desktop-text {
