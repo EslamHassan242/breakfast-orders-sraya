@@ -17,7 +17,14 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
 
-  // ✅ Load menu items + today's orders
+  // --- NEW STATES FOR SELLERS & VOTES ---
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [selectedSeller, setSelectedSeller] = useState("");
+  const [voterName, setVoterName] = useState("");
+  const [voting, setVoting] = useState(false);
+  const [voteMessage, setVoteMessage] = useState("");
+
+  // ✅ Load menu items + today's orders + sellers
   useEffect(() => {
     async function loadMenu() {
       const { data, error } = await supabase
@@ -43,12 +50,16 @@ export default function Home() {
 
     loadMenu();
     loadToday();
+    loadSellers(); // ✅ new
   }, []);
 
+  // ✅ Load sellers from Supabase
+  async function loadSellers() {
+    const { data, error } = await supabase.from("sellers").select("*").order("id");
+    if (error) console.error("Failed to load sellers", error);
+    else setSellers(data || []);
+  }
 
-
-
-  
   // ✅ Save order to Supabase
   async function saveOrder() {
     if (order.length === 0) return;
@@ -112,6 +123,40 @@ export default function Home() {
     }
   }
 
+  // ✅ Add vote
+  async function submitVote() {
+    if (!selectedSeller) {
+      setVoteMessage("Please select a seller to vote for.");
+      return;
+    }
+    if (!voterName.trim()) {
+      setVoteMessage("Please enter your name to vote.");
+      return;
+    }
+
+    setVoting(true);
+    setVoteMessage("");
+
+    try {
+      const { error } = await supabase.from("votes").insert([
+        {
+          voter: voterName,
+          seller_id: selectedSeller,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+      if (error) throw error;
+      setVoteMessage("✅ Vote submitted successfully!");
+      setVoterName("");
+      setSelectedSeller("");
+    } catch (err) {
+      console.error("Vote failed:", err);
+      setVoteMessage("❌ Failed to submit vote. Try again.");
+    } finally {
+      setVoting(false);
+    }
+  }
+
   // Order utilities
   function addItem() {
     const item = menu.find((m) => String(m.id) === String(selectedId));
@@ -153,7 +198,6 @@ export default function Home() {
         <img src="/cover.jpg" alt="Sraya Breakfast Cover" />
         <div className="cover-text">
           <h1>🥞 Sraya Breakfast Orders</h1>
-          {/* <p>Delicious mornings made simple</p> */}
         </div>
       </div>
 
@@ -289,6 +333,44 @@ export default function Home() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* --- SELLER VOTING --- */}
+      <div className="panel">
+        <h2>Vote for Your Favorite Seller 🏆</h2>
+        <label>Your Name</label>
+        <input
+          type="text"
+          value={voterName}
+          onChange={(e) => setVoterName(e.target.value)}
+          placeholder="Enter your name"
+          className="full-width"
+        />
+
+        <label>Seller</label>
+        <select
+          value={selectedSeller}
+          onChange={(e) => setSelectedSeller(e.target.value)}
+        >
+          <option value="">Select seller</option>
+          {sellers.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+
+        <div className="actions">
+          <button onClick={submitVote} disabled={voting}>
+            {voting ? "Submitting..." : "Vote"}
+          </button>
+        </div>
+
+        {voteMessage && (
+          <p style={{ color: voteMessage.startsWith("✅") ? "green" : "red" }}>
+            {voteMessage}
+          </p>
         )}
       </div>
 
