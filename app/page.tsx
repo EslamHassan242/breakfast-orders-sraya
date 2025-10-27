@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-// Utility
+// Utility: format as currency
 function currency(n: number) {
   return `$${n.toFixed(2)}`;
 }
@@ -17,7 +17,7 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
 
-  // ✅ Load menu items from Supabase
+  // ✅ Load menu items + today's orders
   useEffect(() => {
     async function loadMenu() {
       const { data, error } = await supabase
@@ -27,7 +27,6 @@ export default function Home() {
 
       if (error || !data) {
         console.error("Menu load failed:", error);
-        // fallback menu if Supabase is empty
         const fallback = [
           { id: 1, name: "Coffee", price: 1.5 },
           { id: 2, name: "Tea", price: 1.25 },
@@ -41,6 +40,7 @@ export default function Home() {
         if (data.length) setSelectedId(String(data[0].id));
       }
     }
+
     loadMenu();
     loadToday();
   }, []);
@@ -75,7 +75,7 @@ export default function Home() {
     }
   }
 
-  // ✅ Load today’s orders + summary from Supabase
+  // ✅ Load today's orders and compute summary
   async function loadToday() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
@@ -90,7 +90,6 @@ export default function Home() {
       if (ordersError) throw ordersError;
       setTodayOrders(ordersData || []);
 
-      // ✅ compute summary (group by item name)
       const summaryMap: Record<string, number> = {};
       ordersData?.forEach((o) => {
         o.items.forEach((it: any) => {
@@ -109,6 +108,7 @@ export default function Home() {
     }
   }
 
+  // Order utilities
   function addItem() {
     const item = menu.find((m) => String(m.id) === String(selectedId));
     if (!item) return;
@@ -120,10 +120,7 @@ export default function Home() {
           p.id === item.id ? { ...p, qty: p.qty + q } : p
         );
       }
-      return [
-        ...prev,
-        { id: item.id, name: item.name, price: item.price, qty: q },
-      ];
+      return [...prev, { id: item.id, name: item.name, price: item.price, qty: q }];
     });
   }
 
@@ -147,22 +144,27 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1>🥞 Sraya Breakfast Orders</h1>
+      {/* --- COVER IMAGE --- */}
+      <div className="cover">
+        <img src="/cover.jpg" alt="Sraya Breakfast Cover" />
+        <div className="cover-text">
+          <h1>🥞 Sraya Breakfast Orders</h1>
+          {/* <p>Delicious mornings made simple</p> */}
+        </div>
+      </div>
 
-      {/* --- Order Form --- */}
+      {/* --- ORDER FORM --- */}
       <div className="panel">
         <label>Name</label>
         <input
           type="text"
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
+          placeholder="Enter your name"
         />
 
         <label>Item</label>
-        <select
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-        >
+        <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
           {menu.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
@@ -186,7 +188,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* --- Current Order --- */}
+      {/* --- CURRENT ORDER --- */}
       <div className="panel">
         <h2>Current Order</h2>
         {order.length === 0 ? (
@@ -206,34 +208,20 @@ export default function Home() {
                   <td>{o.name}</td>
                   <td>
                     <div className="qty-control">
-                      <button
-                        onClick={() =>
-                          updateOrderQty(o.id, Math.max(1, o.qty - 1))
-                        }
-                      >
-                        -
-                      </button>
+                      <button onClick={() => updateOrderQty(o.id, Math.max(1, o.qty - 1))}>-</button>
                       <input
                         type="number"
                         min="1"
                         value={o.qty}
                         onChange={(e) =>
-                          updateOrderQty(
-                            o.id,
-                            Math.max(1, parseInt(e.target.value) || 1)
-                          )
+                          updateOrderQty(o.id, Math.max(1, parseInt(e.target.value) || 1))
                         }
                       />
-                      <button onClick={() => updateOrderQty(o.id, o.qty + 1)}>
-                        +
-                      </button>
+                      <button onClick={() => updateOrderQty(o.id, o.qty + 1)}>+</button>
                     </div>
                   </td>
                   <td>
-                    <button
-                      className="remove-btn"
-                      onClick={() => removeItem(o.id)}
-                    >
+                    <button className="remove-btn" onClick={() => removeItem(o.id)}>
                       <span className="desktop-text">Remove</span>
                       <span className="mobile-icon">🗑️</span>
                     </button>
@@ -246,12 +234,12 @@ export default function Home() {
 
         <div className="actions">
           <button onClick={saveOrder} disabled={order.length === 0 || saving}>
-            {saving ? "Saving..." : "Save Order"}
+            {saving ? "Saving..." : `Save Order (${currency(total())})`}
           </button>
         </div>
       </div>
 
-      {/* --- Summary --- */}
+      {/* --- SUMMARY --- */}
       <div className="panel">
         <h2>Today's Summary</h2>
         {todaySummary.length === 0 ? (
@@ -281,10 +269,7 @@ export default function Home() {
         ) : (
           <div>
             {todayOrders.map((o) => (
-              <div
-                key={o.id}
-                style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
-              >
+              <div key={o.id} style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}>
                 <strong>{o.customer}</strong> —{" "}
                 <small className="muted">
                   {new Date(o.created_at).toLocaleTimeString()}
