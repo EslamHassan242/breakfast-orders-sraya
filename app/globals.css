@@ -4,9 +4,11 @@
   --accent: #2b7a78;
   --muted: #666;
 }
+
 * {
   box-sizing: border-box;
 }
+
 body {
   font-family: Segoe UI, Roboto, Arial, Helvetica, sans-serif;
   background: var(--bg);
@@ -15,18 +17,22 @@ body {
   color: #111;
   -webkit-text-size-adjust: 100%;
 }
+
 .container {
   max-width: 760px;
   margin: 0 auto;
   width: 100%;
 }
+
 h1 {
   margin-top: 0;
   font-size: 1.5rem;
 }
+
 h2 {
   font-size: 1.2rem;
 }
+
 .panel {
   background: var(--panel);
   padding: 16px;
@@ -36,15 +42,18 @@ h2 {
   width: 100%;
   overflow-x: auto;
 }
+
 label {
   display: block;
   margin-top: 8px;
   font-size: 0.9rem;
   color: var(--muted);
 }
+
+/* ✅ Name input full width */
+input[type="text"],
 select,
-input[type="number"],
-input[type="text"] {
+input[type="number"] {
   width: 100%;
   padding: 8px;
   margin-top: 6px;
@@ -52,36 +61,42 @@ input[type="text"] {
   border-radius: 6px;
   font-size: 1rem;
 }
-input[type="number"],
-input[type="text"] {
+
+input[type="number"] {
   max-width: 120px;
 }
+
 .qty-control {
   display: flex;
   align-items: center;
   gap: 4px;
 }
+
 .qty-control button {
   padding: 4px 12px;
   min-width: 32px;
   font-size: 16px;
 }
+
 .qty-control input {
   width: 60px;
   text-align: center;
   -moz-appearance: textfield;
 }
+
 .qty-control input::-webkit-outer-spin-button,
 .qty-control input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 .actions {
   margin-top: 12px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
+
 button {
   background: var(--accent);
   color: #fff;
@@ -93,19 +108,34 @@ button {
   min-width: 80px;
   touch-action: manipulation;
 }
+
 button.secondary {
   background: #aaa;
 }
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* ✅ Remove button enhancement */
+.remove-btn {
+  background: white;
+  color: #e00;
+  border: 1px solid #ddd;
+  font-weight: bold;
+}
+.remove-btn:hover {
+  background: #ffe5e5;
+}
+
 .order-table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 8px;
   min-width: 320px;
 }
+
 .order-table th,
 .order-table td {
   padding: 8px;
@@ -113,94 +143,106 @@ button:disabled {
   text-align: left;
   white-space: nowrap;
 }
+
 .order-table td button {
   padding: 6px 12px;
   min-width: 60px;
   font-size: 0.9rem;
 }
+
 tfoot td {
   font-weight: 700;
 }
+
 footer {
   font-size: 0.8rem;
   color: var(--muted);
   text-align: center;
   margin-top: 8px;
 }
+
+/* Responsive adjustments */
 .mobile-icon {
   display: none;
 }
 
-
-
 @media (max-width: 480px) {
-
- .desktop-text {
-    display: none;
-  }
-  .mobile-icon {
-    display: inline;
-  }
-
   body {
     padding: 8px;
   }
-  .panel {
-    padding: 12px;
-  }
+
   h1 {
     text-align: center;
   }
+
+  .panel {
+    padding: 12px;
+  }
+
   .actions {
     justify-content: stretch;
   }
+
   .actions button {
     flex: 1;
   }
 
-  /* Make order table more compact */
-  .order-table th,
-  .order-table td {
-    padding: 6px;
-    font-size: 0.9rem;
-  }
-
-  /* Instead of hiding remove button completely, make it icon-style */
-  .order-table td button {
-    padding: 4px 8px;
-    font-size: 0.8rem;
-    min-width: auto;
-  }
-
-  /* Optional: stack order table rows on mobile */
+  /* ✅ Make table responsive like cards */
   .order-table {
-    display: block;
-    width: 100%;
-    overflow-x: auto;
+    border: 0;
   }
 
-  /* Let user scroll horizontally if needed */
   .order-table thead {
     display: none;
   }
 
   .order-table tr {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #eee;
-    padding: 8px 0;
+    flex-direction: column;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .order-table td {
     border: none;
-    padding: 4px 6px;
-    flex: 1;
-    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 0.95rem;
   }
 
   .order-table td:last-child {
-    flex: 0 0 auto;
+    justify-content: flex-end;
+  }
+
+  .desktop-text {
+    display: none;
+  }
+
+  .mobile-icon {
+    display: inline-block;
+  }
+
+  /* ✅ smaller delete icon style for touch */
+  .remove-btn {
+    border-radius: 50%;
+    padding: 8px;
+    min-width: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    color: #e00;
+    font-size: 18px;
+  }
+  .remove-btn:hover {
+    background: #ffe5e5;
   }
 }
-
