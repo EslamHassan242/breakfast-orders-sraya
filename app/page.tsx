@@ -45,6 +45,10 @@ export default function Home() {
     loadToday();
   }, []);
 
+
+
+
+  
   // ✅ Save order to Supabase
   async function saveOrder() {
     if (order.length === 0) return;
@@ -160,7 +164,8 @@ export default function Home() {
           type="text"
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
-          
+          placeholder="Enter your name"
+          className="full-width"
         />
 
         <label>Item</label>
