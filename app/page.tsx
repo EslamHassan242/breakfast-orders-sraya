@@ -1,65 +1,301 @@
-import Image from "next/image";
+"use client";
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+// Utility
+function currency(n: number) {
+  return `$${n.toFixed(2)}`;
+}
 
 export default function Home() {
+  const [menu, setMenu] = useState<any[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [qty, setQty] = useState(1);
+  const [order, setOrder] = useState<any[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [customer, setCustomer] = useState("");
+  const [todayOrders, setTodayOrders] = useState<any[]>([]);
+  const [todaySummary, setTodaySummary] = useState<any[]>([]);
+
+  // ✅ Load menu items from Supabase
+  useEffect(() => {
+    async function loadMenu() {
+      const { data, error } = await supabase
+        .from("menu")
+        .select("*")
+        .order("id");
+
+      if (error || !data) {
+        console.error("Menu load failed:", error);
+        // fallback menu if Supabase is empty
+        const fallback = [
+          { id: 1, name: "Coffee", price: 1.5 },
+          { id: 2, name: "Tea", price: 1.25 },
+          { id: 3, name: "Eggs", price: 2.5 },
+          { id: 4, name: "Toast", price: 1.0 },
+        ];
+        setMenu(fallback);
+        setSelectedId(String(fallback[0].id));
+      } else {
+        setMenu(data);
+        if (data.length) setSelectedId(String(data[0].id));
+      }
+    }
+    loadMenu();
+    loadToday();
+  }, []);
+
+  // ✅ Save order to Supabase
+  async function saveOrder() {
+    if (order.length === 0) return;
+    if (!customer.trim()) {
+      alert("Please enter your name before saving the order.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { error } = await supabase.from("orders").insert([
+        {
+          customer,
+          items: order,
+          total: total(),
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (error) throw error;
+      setOrder([]);
+      await loadToday();
+    } catch (error) {
+      console.error("Save failed:", error);
+      alert("Failed to save order. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // ✅ Load today’s orders + summary from Supabase
+  async function loadToday() {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+
+    try {
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select("*")
+        .gte("created_at", startOfDay.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (ordersError) throw ordersError;
+      setTodayOrders(ordersData || []);
+
+      // ✅ compute summary (group by item name)
+      const summaryMap: Record<string, number> = {};
+      ordersData?.forEach((o) => {
+        o.items.forEach((it: any) => {
+          summaryMap[it.name] = (summaryMap[it.name] || 0) + it.qty;
+        });
+      });
+
+      const summaryArr = Object.entries(summaryMap).map(([name, qty], i) => ({
+        id: i + 1,
+        name,
+        qty,
+      }));
+      setTodaySummary(summaryArr);
+    } catch (err) {
+      console.error("Failed to load today data", err);
+    }
+  }
+
+  function addItem() {
+    const item = menu.find((m) => String(m.id) === String(selectedId));
+    if (!item) return;
+    const q = Math.max(1, Math.floor(Number(qty) || 1));
+    setOrder((prev) => {
+      const exists = prev.find((p) => p.id === item.id);
+      if (exists) {
+        return prev.map((p) =>
+          p.id === item.id ? { ...p, qty: p.qty + q } : p
+        );
+      }
+      return [...prev, { id: item.id, name: item.name, price: item.price, qty: q }];
+    });
+  }
+
+  function updateOrderQty(id: number, newQty: number) {
+    setOrder((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, qty: Math.max(1, newQty) } : p))
+    );
+  }
+
+  function removeItem(id: number) {
+    setOrder((prev) => prev.filter((p) => p.id !== id));
+  }
+
+  function clearOrder() {
+    setOrder([]);
+  }
+
+  function total() {
+    return order.reduce((s, o) => s + o.price * o.qty, 0);
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="container">
+      <h1>🥞 Sraya Breakfast Orders</h1>
+
+      {/* --- Order Form --- */}
+      <div className="panel">
+        <label>Name</label>
+        <input
+          type="text"
+          value={customer}
+          onChange={(e) => setCustomer(e.target.value)}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+        <label>Item</label>
+        <select
+          value={selectedId}
+          onChange={(e) => setSelectedId(e.target.value)}
+        >
+          {menu.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+
+        <label>Quantity</label>
+        <input
+          type="number"
+          min="1"
+          value={qty}
+          onChange={(e) => setQty(Number(e.target.value))}
+        />
+
+        <div className="actions">
+          <button onClick={addItem}>Add</button>
+          <button onClick={clearOrder} className="secondary">
+            Clear
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      {/* --- Current Order --- */}
+      <div className="panel">
+        <h2>Current Order</h2>
+        {order.length === 0 ? (
+          <p>No items yet.</p>
+        ) : (
+          <table className="order-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.map((o) => (
+                <tr key={o.id}>
+                  <td>{o.name}</td>
+                  <td>
+                    <div className="qty-control">
+                      <button
+                        onClick={() =>
+                          updateOrderQty(o.id, Math.max(1, o.qty - 1))
+                        }
+                      >
+                        -
+                      </button>
+                      <input
+                        type="number"
+                        min="1"
+                        value={o.qty}
+                        onChange={(e) =>
+                          updateOrderQty(
+                            o.id,
+                            Math.max(1, parseInt(e.target.value) || 1)
+                          )
+                        }
+                      />
+                      <button onClick={() => updateOrderQty(o.id, o.qty + 1)}>
+                        +
+                      </button>
+                    </div>
+                  </td>
+                  <td>
+                    <button onClick={() => removeItem(o.id)}>Remove</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <div className="actions">
+          <button onClick={saveOrder} disabled={order.length === 0 || saving}>
+            {saving ? "Saving..." : "Save Order"}
+          </button>
         </div>
-      </main>
+      </div>
+
+      {/* --- Summary --- */}
+      <div className="panel">
+        <h2>Today's Summary</h2>
+        {todaySummary.length === 0 ? (
+          <p>No orders for today yet.</p>
+        ) : (
+          <table className="order-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Total Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {todaySummary.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.name}</td>
+                  <td>{s.qty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+
+        <h3 style={{ marginTop: 12 }}>Today's Orders</h3>
+        {todayOrders.length === 0 ? (
+          <p>No orders yet.</p>
+        ) : (
+          <div>
+            {todayOrders.map((o) => (
+              <div
+                key={o.id}
+                style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
+              >
+                <strong>{o.customer}</strong> —{" "}
+                <small className="muted">
+                  {new Date(o.created_at).toLocaleTimeString()}
+                </small>
+                <div>
+                  {o.items.map((it: any) => (
+                    <div key={it.id}>
+                      {it.name} × {it.qty}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <footer>
+        <small>Day By Day Breakfast Ordering For Sraya.</small>
+      </footer>
     </div>
   );
 }

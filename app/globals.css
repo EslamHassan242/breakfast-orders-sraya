@@ -1,26 +1,151 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f7f7f8;
+  --panel: #fff;
+  --accent: #2b7a78;
+  --muted: #666;
 }
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  margin: 0;
+  padding: 12px;
+  color: #111;
+  -webkit-text-size-adjust: 100%;
+}
+.container {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+}
+h1 {
+  margin-top: 0;
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.2rem;
+}
+.panel {
+  background: var(--panel);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  overflow-x: auto;
+}
+label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+select,
+input[type="number"],
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 6px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+input[type="number"],
+input[type="text"] {
+  max-width: 120px;
+}
+.qty-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.qty-control button {
+  padding: 4px 12px;
+  min-width: 32px;
+  font-size: 16px;
+}
+.qty-control input {
+  width: 60px;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.qty-control input::-webkit-outer-spin-button,
+.qty-control input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  min-width: 80px;
+  touch-action: manipulation;
+}
+button.secondary {
+  background: #aaa;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.order-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  min-width: 320px;
+}
+.order-table th,
+.order-table td {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  white-space: nowrap;
+}
+.order-table td button {
+  padding: 6px 12px;
+  min-width: 60px;
+  font-size: 0.9rem;
+}
+tfoot td {
+  font-weight: 700;
+}
+footer {
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 8px;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 8px;
+  }
+  .panel {
+    padding: 12px;
+  }
+  h1 {
+    text-align: center;
+  }
+  .actions {
+    justify-content: stretch;
+  }
+  .actions button {
+    flex: 1;
+  }
+  .order-table th:nth-child(3),
+  .order-table td:nth-child(3) {
+    display: none;
+  }
 }
