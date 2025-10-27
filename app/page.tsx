@@ -220,7 +220,7 @@ export default function Home() {
           type="text"
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
-          placeholder="Enter your name"
+         
           className="full-width"
         />
 
@@ -292,31 +292,10 @@ export default function Home() {
         </div>
       </div>
 
-      {/* SUMMARY */}
-      <div className="panel">
-        <h2>Today's Summary</h2>
-        {todaySummary.length === 0 ? (
-          <p>No orders yet.</p>
-        ) : (
-          <table className="order-table">
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Qty</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todaySummary.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.name}</td>
-                  <td>{s.qty}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
 
-        <h3 style={{ marginTop: 12 }}>Today's Orders</h3>
+ {/* todays orders */}
+      <div  className="panel" >
+        <h3 style={{ marginTop: 12, color:"red" }}>Today's Orders</h3>
         {todayOrders.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
@@ -342,6 +321,33 @@ export default function Home() {
           </div>
         )}
       </div>
+
+
+      {/* SUMMARY */}
+      <div className="panel">
+        <h2  style={{color:"red"}}   >Today's Summary</h2>
+        {todaySummary.length === 0 ? (
+          <p>No orders yet.</p>
+        ) : (
+          <table className="order-table">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {todaySummary.map((s) => (
+                <tr key={s.id}>
+                  <td>{s.name}</td>
+                  <td>{s.qty}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+     
 
       {/* VOTING SECTION */}
       <div className="panel">
