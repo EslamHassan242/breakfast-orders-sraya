@@ -17,71 +17,39 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
 
-  // --- NEW STATES FOR SELLERS & VOTES ---
-  const [sellers, setSellers] = useState<any[]>([]);
-  const [votesCount, setVotesCount] = useState<{ [key: number]: number }>({});
-  const [selectedSeller, setSelectedSeller] = useState("");
-  const [voterName, setVoterName] = useState("");
-  const [voting, setVoting] = useState(false);
-  const [voteMessage, setVoteMessage] = useState("");
-  const [userIp, setUserIp] = useState("");
-
-  // ✅ Load menu items + today's orders + sellers
+  // ✅ Load menu items + today's orders
   useEffect(() => {
+    async function loadMenu() {
+      const { data, error } = await supabase
+        .from("menu")
+        .select("*")
+        .order("id");
+
+      if (error || !data) {
+        console.error("Menu load failed:", error);
+        const fallback = [
+          { id: 1, name: "Coffee", price: 1.5 },
+          { id: 2, name: "Tea", price: 1.25 },
+          { id: 3, name: "Eggs", price: 2.5 },
+          { id: 4, name: "Toast", price: 1.0 },
+        ];
+        setMenu(fallback);
+        setSelectedId(String(fallback[0].id));
+      } else {
+        setMenu(data);
+        if (data.length) setSelectedId(String(data[0].id));
+      }
+    }
+
     loadMenu();
     loadToday();
-    loadSellers();
-    loadIp();
   }, []);
 
-  async function loadIp() {
-    try {
-      const res = await fetch("https://api.ipify.org?format=json");
-      const data = await res.json();
-      setUserIp(data.ip);
-    } catch {
-      setUserIp("unknown");
-    }
-  }
 
-  async function loadMenu() {
-    const { data, error } = await supabase.from("menu").select("*").order("id");
-    if (error || !data) {
-      const fallback = [
-        { id: 1, name: "Coffee", price: 1.5 },
-        { id: 2, name: "Tea", price: 1.25 },
-        { id: 3, name: "Eggs", price: 2.5 },
-        { id: 4, name: "Toast", price: 1.0 },
-      ];
-      setMenu(fallback);
-      setSelectedId(String(fallback[0].id));
-    } else {
-      setMenu(data);
-      if (data.length) setSelectedId(String(data[0].id));
-    }
-  }
 
-  async function loadSellers() {
-    const { data, error } = await supabase.from("sellers").select("*").order("id");
-    if (!error && data) {
-      setSellers(data);
-      loadVotes();
-    }
-  }
 
-  async function loadVotes() {
-   const { data, error } = await supabase
-  .from('votes')
-  .select('seller_id, count:seller_id', { count: 'exact', head: false });
-
-    if (!error && data) {
-      const map: any = {};
-      data.forEach((v: any) => (map[v.seller_id] = v.count));
-      setVotesCount(map);
-    }
-  }
-
-  // ✅ Save order
+  
+  // ✅ Save order to Supabase
   async function saveOrder() {
     if (order.length === 0) return;
     if (!customer.trim()) {
@@ -99,6 +67,7 @@ export default function Home() {
           created_at: new Date().toISOString(),
         },
       ]);
+
       if (error) throw error;
       setOrder([]);
       await loadToday();
@@ -114,68 +83,36 @@ export default function Home() {
   async function loadToday() {
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
-    const { data, error } = await supabase
-      .from("orders")
-      .select("*")
-      .gte("created_at", startOfDay.toISOString())
-      .order("created_at", { ascending: false });
-    if (!error && data) {
-      setTodayOrders(data);
-      const map: Record<string, number> = {};
-      data.forEach((o) =>
-        o.items.forEach((it: any) => {
-          map[it.name] = (map[it.name] || 0) + it.qty;
-        })
-      );
-      setTodaySummary(Object.entries(map).map(([name, qty], i) => ({ id: i + 1, name, qty })));
-    }
-  }
-
-  // ✅ Vote handler with IP restriction
-  async function submitVote() {
-    if (!selectedSeller) {
-      setVoteMessage("Please select a seller.");
-      return;
-    }
-    if (!voterName.trim()) {
-      setVoteMessage("Please enter your name.");
-      return;
-    }
-    if (!userIp) {
-      setVoteMessage("Could not detect IP. Try again.");
-      return;
-    }
-
-    setVoting(true);
-    setVoteMessage("");
 
     try {
-      const { error } = await supabase.from("votes").insert([
-        {
-          voter: voterName,
-          seller_id: selectedSeller,
-          ip_address: userIp,
-          vote_date: new Date().toISOString().slice(0, 10),
-          created_at: new Date().toISOString(),
-        },
-      ]);
-      if (error) {
-        if (error.message.includes("duplicate")) {
-          setVoteMessage("⚠️ You already voted for this seller today!");
-        } else throw error;
-      } else {
-        setVoteMessage("✅ Vote submitted successfully!");
-        loadVotes();
-      }
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select("*")
+        .gte("created_at", startOfDay.toISOString())
+        .order("created_at", { ascending: false });
+
+      if (ordersError) throw ordersError;
+      setTodayOrders(ordersData || []);
+
+      const summaryMap: Record<string, number> = {};
+      ordersData?.forEach((o) => {
+        o.items.forEach((it: any) => {
+          summaryMap[it.name] = (summaryMap[it.name] || 0) + it.qty;
+        });
+      });
+
+      const summaryArr = Object.entries(summaryMap).map(([name, qty], i) => ({
+        id: i + 1,
+        name,
+        qty,
+      }));
+      setTodaySummary(summaryArr);
     } catch (err) {
-      console.error(err);
-      setVoteMessage("❌ Failed to submit vote.");
-    } finally {
-      setVoting(false);
+      console.error("Failed to load today data", err);
     }
   }
 
-  // --- Order utilities ---
+  // Order utilities
   function addItem() {
     const item = menu.find((m) => String(m.id) === String(selectedId));
     if (!item) return;
@@ -209,18 +146,18 @@ export default function Home() {
     return order.reduce((s, o) => s + o.price * o.qty, 0);
   }
 
-  // --- JSX ---
   return (
     <div className="container">
-      {/* COVER IMAGE */}
+      {/* --- COVER IMAGE --- */}
       <div className="cover">
         <img src="/cover.jpg" alt="Sraya Breakfast Cover" />
         <div className="cover-text">
           <h1>🥞 Sraya Breakfast Orders</h1>
+          {/* <p>Delicious mornings made simple</p> */}
         </div>
       </div>
 
-      {/* ORDER FORM */}
+      {/* --- ORDER FORM --- */}
       <div className="panel">
         <label>Name</label>
         <input
@@ -256,7 +193,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* CURRENT ORDER */}
+      {/* --- CURRENT ORDER --- */}
       <div className="panel">
         <h2>Current Order</h2>
         {order.length === 0 ? (
@@ -307,7 +244,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* SUMMARY */}
+      {/* --- SUMMARY --- */}
       <div className="panel">
         <h2>Today's Summary</h2>
         {todaySummary.length === 0 ? (
@@ -330,66 +267,29 @@ export default function Home() {
             </tbody>
           </table>
         )}
-      </div>
 
-      {/* --- BEAUTIFUL SELLER VOTING SECTION --- */}
-      <div className="panel bg-gradient-to-r from-yellow-100 to-orange-50 rounded-2xl shadow-lg p-4">
-        <h2 className="text-2xl font-bold text-center mb-3 text-amber-800">
-          🏆 Vote for Your Favorite Seller
-        </h2>
-
-        <div className="grid gap-2">
-          {sellers.map((s) => (
-            <div
-              key={s.id}
-              className="flex justify-between items-center bg-white p-3 rounded-xl shadow-sm border border-yellow-200"
-            >
-              <div className="font-semibold text-gray-800">{s.name}</div>
-              <div className="flex gap-3 items-center">
-                <span className="text-amber-600 font-bold">
-                  {votesCount[s.id] || 0} ❤️
-                </span>
-                <button
-                  onClick={() => setSelectedSeller(s.id)}
-                  className={`px-3 py-1 rounded-lg ${
-                    selectedSeller == s.id
-                      ? "bg-amber-600 text-white"
-                      : "bg-amber-300 hover:bg-amber-400"
-                  }`}
-                >
-                  Select
-                </button>
+        <h3 style={{ marginTop: 12 }}>Today's Orders</h3>
+        {todayOrders.length === 0 ? (
+          <p>No orders yet.</p>
+        ) : (
+          <div>
+            {todayOrders.map((o) => (
+              <div key={o.id} style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}>
+                <strong>{o.customer}</strong> —{" "}
+                <small className="muted">
+                  {new Date(o.created_at).toLocaleTimeString()}
+                </small>
+                <div>
+                  {o.items.map((it: any) => (
+                    <div key={it.id}>
+                      {it.name} × {it.qty}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-4">
-          <input
-            type="text"
-            value={voterName}
-            onChange={(e) => setVoterName(e.target.value)}
-            placeholder="Enter your name"
-            className="w-full p-2 border rounded-lg"
-          />
-          <button
-            onClick={submitVote}
-            disabled={voting}
-            className="mt-3 w-full bg-amber-600 text-white p-2 rounded-lg hover:bg-amber-700 transition"
-          >
-            {voting ? "Submitting..." : "Submit Vote"}
-          </button>
-
-          {voteMessage && (
-            <p
-              className={`mt-2 text-center ${
-                voteMessage.startsWith("✅") ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              {voteMessage}
-            </p>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <footer>
