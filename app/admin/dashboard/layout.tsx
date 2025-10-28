@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabaseClient";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [authChecked, setAuthChecked] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -15,29 +14,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       } = await supabase.auth.getSession();
 
       const user = session?.user;
+
       if (!user) {
         router.replace("/admin/login");
         return;
       }
 
-      const role = user.user_metadata?.role;
-      if (role !== "admin") {
-        router.replace("/admin/login");
-        return;
-      }
-
-      setIsAdmin(true);
+      // ✅ User is logged in — no role check needed
       setAuthChecked(true);
     }
 
     checkAuth();
+
+    // ✅ Optional: auto-redirect if user logs out from another tab
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.replace("/admin/login");
+      }
+    });
+
+    return () => {
+      listener?.subscription.unsubscribe();
+    };
   }, [router]);
 
   if (!authChecked) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
-
-  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen flex">
@@ -63,6 +66,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </li>
         </ul>
       </aside>
+
       <main className="flex-1 p-6 bg-gray-100">{children}</main>
     </div>
   );
