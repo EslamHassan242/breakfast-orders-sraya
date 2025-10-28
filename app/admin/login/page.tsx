@@ -1,30 +1,50 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AdminLogin() {
-  const [user, setUser] = useState("");
-  const [pass, setPass] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
-    const adminUser = localStorage.getItem("adminUser");
-    const adminPass = localStorage.getItem("adminPass");
+    // Try to sign in using Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (!adminUser || !adminPass) {
-      alert("Please set your admin credentials first!");
+    if (error) {
+      setError("Invalid credentials");
       return;
     }
 
-    if (user === adminUser && pass === adminPass) {
-      localStorage.setItem("adminAuth", "true");
-      router.push("/admin");
-    } else {
-      setError("Invalid username or password");
+    // Get the logged-in user's role
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", data.user?.id)
+      .single();
+
+    if (userError) {
+      setError("Failed to fetch user info");
+      return;
     }
+
+    if (userData.role !== "admin") {
+      setError("You are not authorized to access the admin panel");
+      await supabase.auth.signOut();
+      return;
+    }
+
+    // Mark as logged in (optional: you can just rely on Supabase session)
+    localStorage.setItem("adminAuth", "true");
+    router.push("/admin");
   };
 
   return (
@@ -32,16 +52,16 @@ export default function AdminLogin() {
       <h1>Admin Login</h1>
       <form onSubmit={handleLogin}>
         <input
-          type="text"
-          placeholder="Username"
-          value={user}
-          onChange={(e) => setUser(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <input
           type="password"
           placeholder="Password"
-          value={pass}
-          onChange={(e) => setPass(e.target.value)}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button type="submit">Login</button>
         {error && <p style={{ color: "red" }}>{error}</p>}

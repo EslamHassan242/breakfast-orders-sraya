@@ -1,28 +1,48 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [authChecked, setAuthChecked] = useState(false);
-  const [isAuth, setIsAuth] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    const auth = localStorage.getItem("adminAuth");
-    if (auth === "true") {
-      setIsAuth(true);
-    } else {
-      router.replace("/admin/login");
+    async function checkAuth() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        router.replace("/admin/login");
+        return;
+      }
+
+      // Check role from your users table
+      const { data: userData, error } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", session.user.id)
+        .single();
+
+      if (error || !userData || userData.role !== "admin") {
+        router.replace("/admin/login");
+        return;
+      }
+
+      setIsAdmin(true);
+      setAuthChecked(true);
     }
-    setAuthChecked(true);
+
+    checkAuth();
   }, [router]);
 
   if (!authChecked) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  if (!isAuth) return null;
+  if (!isAdmin) return null;
 
   return (
     <div className="min-h-screen flex">
@@ -37,8 +57,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <li><a href="/admin/stats">Daily Summary</a></li>
           <li>
             <button
-              onClick={() => {
-                localStorage.removeItem("adminAuth");
+              onClick={async () => {
+                await supabase.auth.signOut();
                 router.push("/admin/login");
               }}
               className="text-red-400 mt-4"
