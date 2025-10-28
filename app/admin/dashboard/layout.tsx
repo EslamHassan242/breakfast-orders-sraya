@@ -13,29 +13,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         data: { session },
       } = await supabase.auth.getSession();
 
-      const user = session?.user;
-
-      if (!user) {
+      // If user not logged in, redirect to login page
+      if (!session?.user) {
         router.replace("/admin/login");
         return;
       }
 
-      // ✅ User is logged in — no role check needed
+      // All logged-in users can access admin now
       setAuthChecked(true);
     }
 
     checkAuth();
-
-    // ✅ Optional: auto-redirect if user logs out from another tab
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        router.replace("/admin/login");
-      }
-    });
-
-    return () => {
-      listener?.subscription.unsubscribe();
-    };
   }, [router]);
 
   if (!authChecked) {
