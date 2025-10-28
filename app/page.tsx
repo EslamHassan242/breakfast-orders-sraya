@@ -220,7 +220,6 @@ export default function Home() {
           type="text"
           value={customer}
           onChange={(e) => setCustomer(e.target.value)}
-         
           className="full-width"
         />
 
@@ -292,10 +291,9 @@ export default function Home() {
         </div>
       </div>
 
-
- {/* todays orders */}
-      <div  className="panel" >
-        <h3 style={{ marginTop: 12, color:"red" }}>Today's Orders</h3>
+      {/* todays orders */}
+      <div className="panel">
+        <h3 style={{ marginTop: 12, color: "red" }}>Today's Orders</h3>
         {todayOrders.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
@@ -322,10 +320,9 @@ export default function Home() {
         )}
       </div>
 
-
       {/* SUMMARY */}
       <div className="panel">
-        <h2  style={{color:"red"}}   >Today's Summary</h2>
+        <h2 style={{ color: "red" }}>Today's Summary</h2>
         {todaySummary.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
@@ -347,7 +344,6 @@ export default function Home() {
           </table>
         )}
       </div>
-     
 
       {/* VOTING SECTION */}
       <div className="panel">
@@ -379,6 +375,9 @@ export default function Home() {
             {votedToday ? "Voted Today ✅" : "Confirm Vote"}
           </button>
         </div>
+      </div>
+      <div className="panel" style={{ textAlign: "center" }}>
+        <a href="/admin/login">Admin Login</a>
       </div>
 
       <footer>
