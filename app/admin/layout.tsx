@@ -1,30 +1,28 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [isAuth, setIsAuth] = useState<boolean | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuth, setIsAuth] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    // ✅ Only run on client
-    if (typeof window !== "undefined") {
-      const auth = localStorage.getItem("adminAuth");
-      if (auth === "true") {
-        setIsAuth(true);
-      } else {
-        setIsAuth(false);
-        router.replace("/admin/login");
-      }
+    const auth = localStorage.getItem("adminAuth");
+    if (auth === "true") {
+      setIsAuth(true);
+    } else {
+      router.replace("/admin/login");
     }
+    setAuthChecked(true);
   }, [router]);
 
-  if (isAuth === null) {
-    // ✅ Prevent flickering/loading loop
+  if (!authChecked) {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  if (!isAuth) return null; // wait for redirect
+  if (!isAuth) return null;
 
   return (
     <div className="min-h-screen flex">
