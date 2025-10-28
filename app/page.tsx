@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-
+import Link from "next/link";
 // Utility
 function currency(n: number) {
   return `$${n.toFixed(2)}`;
@@ -23,6 +23,13 @@ export default function Home() {
   const [selectedSeller, setSelectedSeller] = useState<number | null>(null);
   const [votedToday, setVotedToday] = useState(false);
   const [loadingVotes, setLoadingVotes] = useState(true);
+    const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const auth = localStorage.getItem("adminAuth");
+    setIsAdmin(!!auth);
+  }, []);
+
 
   useEffect(() => {
     loadMenu();
@@ -376,9 +383,13 @@ export default function Home() {
           </button>
         </div>
       </div>
-      <div className="panel" style={{ textAlign: "center" }}>
-        <a href="/admin/login">Admin Login</a>
-      </div>
+     <div className="panel" style={{ textAlign: "center" }}>
+      {isAdmin ? (
+        <Link href="/admin">Go to Admin Dashboard</Link>
+      ) : (
+        <Link href="/admin/login">Admin Login</Link>
+      )}
+    </div>
 
       <footer>
         <small>Day By Day Breakfast Ordering for Sraya</small>
