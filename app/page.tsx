@@ -384,11 +384,8 @@ export default function Home() {
         </div>
       </div>
      <div className="panel" style={{ textAlign: "center" }}>
-      {isAdmin ? (
-        <Link href="/admin">Go to Admin Dashboard</Link>
-      ) : (
-        <Link href="/admin/login">Admin Login</Link>
-      )}
+     <Link href="/admin/dashboard">Go to Admin Dashboard</Link>
+
     </div>
 
       <footer>
