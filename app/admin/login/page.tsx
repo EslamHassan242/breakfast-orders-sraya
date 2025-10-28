@@ -13,7 +13,6 @@ export default function AdminLogin() {
     e.preventDefault();
     setError("");
 
-    // Try to sign in using Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -24,26 +23,14 @@ export default function AdminLogin() {
       return;
     }
 
-    // Get the logged-in user's role
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", data.user?.id)
-      .single();
+    const role = data.user?.user_metadata?.role;
 
-    if (userError) {
-      setError("Failed to fetch user info");
-      return;
-    }
-
-    if (userData.role !== "admin") {
+    if (role !== "admin") {
       setError("You are not authorized to access the admin panel");
       await supabase.auth.signOut();
       return;
     }
 
-    // Mark as logged in (optional: you can just rely on Supabase session)
-    localStorage.setItem("adminAuth", "true");
     router.push("/admin");
   };
 

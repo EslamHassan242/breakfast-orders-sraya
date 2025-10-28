@@ -14,19 +14,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         data: { session },
       } = await supabase.auth.getSession();
 
-      if (!session?.user) {
+      const user = session?.user;
+      if (!user) {
         router.replace("/admin/login");
         return;
       }
 
-      // Check role from your users table
-      const { data: userData, error } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", session.user.id)
-        .single();
-
-      if (error || !userData || userData.role !== "admin") {
+      const role = user.user_metadata?.role;
+      if (role !== "admin") {
         router.replace("/admin/login");
         return;
       }
