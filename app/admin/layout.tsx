@@ -3,21 +3,28 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [auth, setAuth] = useState<boolean | null>(null);
+  const [isAuth, setIsAuth] = useState<boolean | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window === "undefined") return; // ✅ prevents server-side access
-
-    const isAuth = localStorage.getItem("adminAuth");
-    if (!isAuth) {
-      router.push("/admin/login");
-    } else {
-      setAuth(true);
+    // ✅ Only run on client
+    if (typeof window !== "undefined") {
+      const auth = localStorage.getItem("adminAuth");
+      if (auth === "true") {
+        setIsAuth(true);
+      } else {
+        setIsAuth(false);
+        router.replace("/admin/login");
+      }
     }
   }, [router]);
 
-  if (auth === null) return <div>Loading...</div>;
+  if (isAuth === null) {
+    // ✅ Prevent flickering/loading loop
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
+  }
+
+  if (!isAuth) return null; // wait for redirect
 
   return (
     <div className="min-h-screen flex">
@@ -36,6 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 localStorage.removeItem("adminAuth");
                 router.push("/admin/login");
               }}
+              className="text-red-400 mt-4"
             >
               Logout
             </button>
