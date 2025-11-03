@@ -3,21 +3,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 
-const SUPABASE_URL = process.env.SUPABASE_URL!;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const RESEND_API_KEY = process.env.RESEND_API_KEY!;
-
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !RESEND_API_KEY) {
-  throw new Error(
-    "Missing required env vars (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY)"
-  );
-}
-
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
-
-const resend = new Resend(RESEND_API_KEY);
+// Defer env validation and client initialization to the request handler to avoid
+// throwing during build-time evaluation.
 
 interface EmailUser {
   email: string;
@@ -27,6 +14,26 @@ interface EmailUser {
 
 export async function GET() {
   try {
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !RESEND_API_KEY) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Missing required env vars (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY)",
+        },
+        { status: 500 }
+      );
+    }
+
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false },
+    });
+    const resend = new Resend(RESEND_API_KEY);
+
     // Fetch users who can receive reminders (email required). If the
     // `reminders_enabled` column exists, respect it; otherwise treat as enabled.
     const { data: users, error: usersError } = await supabaseAdmin
