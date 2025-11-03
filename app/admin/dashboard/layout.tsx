@@ -19,7 +19,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return;
       }
 
-      // All logged-in users can access admin now
+      // Require admin role in user metadata
+      const role = session.user.user_metadata?.role;
+      if (role !== "admin") {
+        await supabase.auth.signOut();
+        router.replace("/admin/login");
+        return;
+      }
+
       setAuthChecked(true);
     }
 

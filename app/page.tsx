@@ -383,10 +383,10 @@ export default function Home() {
           </button>
         </div>
       </div>
-     {/* <div className="panel" style={{ textAlign: "center" }}>
-     <Link href="/admin/dashboard">Go to Admin Dashboard</Link>
-
-    </div> */}
+      {/* ADMIN ENTRY */}
+      <div className="panel" style={{ textAlign: "center" }}>
+        <Link href="/admin/login">Go to Admin</Link>
+      </div>
 
       <footer>
         <small>Day By Day Breakfast Ordering for Sraya</small>

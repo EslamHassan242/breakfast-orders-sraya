@@ -22,25 +22,25 @@ const resend = new Resend(RESEND_API_KEY);
 interface EmailUser {
   email: string;
   name?: string | null;
+  reminders_enabled?: boolean | null;
 }
 
 export async function GET() {
   try {
-    const { data: users, error } = await supabaseAdmin
+    // Fetch users who can receive reminders (email required). If the
+    // `reminders_enabled` column exists, respect it; otherwise treat as enabled.
+    const { data: users, error: usersError } = await supabaseAdmin
       .from("users")
-      .select("email, name");
+      .select("email, name, reminders_enabled")
+      .returns<EmailUser[]>();
 
-    if (error) throw error;
+    if (usersError) throw usersError;
 
-    // Safely map and filter
-    const emails: EmailUser[] = (users ?? [])
-      .filter((u): u is { email: string; name: string | null } => !!u?.email)
-      .map((u) => ({
-        email: u.email,
-        name: u.name ?? null,
-      }));
+    const allUsers: EmailUser[] = (users ?? []).filter(
+      (u) => !!u?.email
+    );
 
-    if (!emails.length) {
+    if (!allUsers.length) {
       return NextResponse.json({
         ok: true,
         sent: 0,
@@ -48,12 +48,44 @@ export async function GET() {
       });
     }
 
+    // Determine who already ordered today using orders.customer (name).
+    // This is a best-effort match by name.
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const { data: todaysOrders, error: ordersError } = await supabaseAdmin
+      .from("orders")
+      .select("customer, created_at")
+      .gte("created_at", start.toISOString());
+
+    if (ordersError) throw ordersError;
+
+    const orderedTodayNames = new Set(
+      (todaysOrders ?? [])
+        .map((o: any) => (o?.customer ?? "").toString().trim().toLowerCase())
+        .filter((s: string) => s.length > 0)
+    );
+
+    // Filter users: enabled (or missing flag) AND not matched by name in today's orders
+    const eligible = allUsers.filter((u) => {
+      const enabled = u.reminders_enabled !== false; // default true if null/undefined
+      const nameKey = (u.name ?? "").toString().trim().toLowerCase();
+      const alreadyOrdered = nameKey && orderedTodayNames.has(nameKey);
+      return enabled && !alreadyOrdered;
+    });
+
+    if (!eligible.length) {
+      return NextResponse.json({
+        ok: true,
+        sent: 0,
+        message: "No eligible recipients (everyone already ordered or opted out)",
+      });
+    }
+
     // Deduplicate by email
     const uniqueByEmail = new Map<string, EmailUser>();
-    for (const u of emails) {
-      if (u) {
-        uniqueByEmail.set(u.email, u);
-      }
+    for (const u of eligible) {
+      uniqueByEmail.set(u.email, u);
     }
 
     const recipients = Array.from(uniqueByEmail.values());
@@ -64,7 +96,7 @@ export async function GET() {
         (r) => `
         <p>Hi ${r.name ?? ""},</p>
         <p>🍳 Reminder: Please add your breakfast order before <strong>10:00 AM</strong> today.</p>
-        <p><small>If you already ordered, ignore this message.</small></p>
+        <p><small>If you already ordered, you can ignore this message.</small></p>
         <hr/>
       `
       )
