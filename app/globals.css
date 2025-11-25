@@ -120,6 +120,7 @@ button {
   font-size: 1rem;
   min-width: 80px;
   touch-action: manipulation;
+  font-family: inherit;
 }
 button.secondary {
   background: #aaa;
@@ -127,6 +128,11 @@ button.secondary {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 .order-table {
   width: 100%;
@@ -147,6 +153,14 @@ button:disabled {
   padding: 6px 12px;
   min-width: 60px;
   font-size: 0.9rem;
+}
+.order-table--current td:nth-child(2),
+.order-table--current td:nth-child(3),
+.order-table--customer td:nth-child(2),
+.order-table--customer td:nth-child(3),
+.order-table--summary td:nth-child(2),
+.order-table--summary td:nth-child(3) {
+  text-align: center;
 }
 .order-table--current th:nth-child(1),
 .order-table--current td:nth-child(1) {
