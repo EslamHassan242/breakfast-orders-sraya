@@ -419,7 +419,7 @@ export default function Home() {
                   <td>{s.qty}</td>
                   <td>
                     {s.notes && s.notes.length
-                      ? s.notes.map((n) => `(${n})`).join(" ")
+                      ? s.notes.map((note: string) => `(${note})`).join(" ")
                       : "-"}
                   </td>
                 </tr>
