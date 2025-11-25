@@ -100,15 +100,29 @@ export default function Home() {
 
     setTodayOrders(data || []);
 
-    const map: Record<string, number> = {};
+    const map: Record<
+      string,
+      { qty: number; notes: Set<string>; id: string | number | undefined }
+    > = {};
     data?.forEach((o) =>
       o.items.forEach((it: any) => {
-        map[it.name] = (map[it.name] || 0) + it.qty;
+        if (!map[it.name]) {
+          map[it.name] = { qty: 0, notes: new Set(), id: it.id };
+        }
+        map[it.name].qty += it.qty;
+        if (it.note && String(it.note).trim()) {
+          map[it.name].notes.add(String(it.note).trim());
+        }
       })
     );
 
     setTodaySummary(
-      Object.entries(map).map(([name, qty], i) => ({ id: i + 1, name, qty }))
+      Object.entries(map).map(([name, value], i) => ({
+        id: value.id ?? i + 1,
+        name,
+        qty: value.qty,
+        notes: Array.from(value.notes),
+      }))
     );
   }
 
@@ -141,8 +155,14 @@ export default function Home() {
     setNote("");
   }
 
-  function removeItem(id: number) {
-    setOrder((prev) => prev.filter((p) => p.id !== id));
+  function removeItem(itemId: number, itemNote?: string) {
+    const targetNote = (itemNote ?? "").trim();
+    setOrder((prev) =>
+      prev.filter((p) => {
+        const currentNote = (p.note ?? "").trim();
+        return !(p.id === itemId && currentNote === targetNote);
+      })
+    );
   }
 
   function total() {
@@ -290,25 +310,20 @@ export default function Home() {
               <tr>
                 <th>Item</th>
                 <th>Qty</th>
+                <th>Note</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               {order.map((o) => (
-                <tr key={o.id}>
-                  <td>
-                    {o.name}
-                    {o.note ? (
-                      <div className="muted" style={{ fontSize: 12 }}>
-                        Note: {o.note}
-                      </div>
-                    ) : null}
-                  </td>
+                <tr key={`${o.id}-${o.note ?? "none"}`}>
+                  <td>{o.name}</td>
                   <td>{o.qty}</td>
+                  <td>{o.note || "-"}</td>
                   <td>
                     <button
                       className="remove-btn"
-                      onClick={() => removeItem(o.id)}
+                      onClick={() => removeItem(o.id, o.note)}
                     >
                       🗑️
                     </button>
@@ -332,31 +347,30 @@ export default function Home() {
         {todayOrders.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
-          <div>
-            {todayOrders.map((o) => (
-              <div
-                key={o.id}
-                style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}
-              >
-                <strong>{o.customer}</strong> —{" "}
-                <small className="muted">
-                  {new Date(o.created_at).toLocaleTimeString()}
-                </small>
-                <div>
-                  {o.items.map((it: any) => (
-                    <div key={it.id}>
-                      {it.name} × {it.qty}
-                      {it.note ? (
-                        <div className="muted" style={{ fontSize: 12 }}>
-                          Note: {it.note}
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <table className="order-table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Note</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {todayOrders.flatMap((o) =>
+                o.items.map((it: any, idx: number) => (
+                  <tr key={`${o.id}-${idx}`}>
+                    <td>{o.customer}</td>
+                    <td>{it.name}</td>
+                    <td>{it.qty}</td>
+                    <td>{it.note || "-"}</td>
+                    <td>{new Date(o.created_at).toLocaleTimeString()}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         )}
       </div>
 
@@ -371,6 +385,7 @@ export default function Home() {
               <tr>
                 <th>Item</th>
                 <th>Qty</th>
+                <th>Notes</th>
               </tr>
             </thead>
             <tbody>
@@ -378,6 +393,7 @@ export default function Home() {
                 <tr key={s.id}>
                   <td>{s.name}</td>
                   <td>{s.qty}</td>
+                  <td>{s.notes && s.notes.length ? s.notes.join(", ") : "-"}</td>
                 </tr>
               ))}
             </tbody>
