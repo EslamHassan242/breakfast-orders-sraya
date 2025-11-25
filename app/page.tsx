@@ -25,6 +25,25 @@ export default function Home() {
     borderRadius: "999px",
     display: "inline-block",
   };
+  const qtyControlsStyle: React.CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+  };
+  const qtyButtonStyle: React.CSSProperties = {
+    width: 28,
+    height: 28,
+    borderRadius: "50%",
+    border: "1px solid #ddd",
+    background: "#f8f8f8",
+    cursor: "pointer",
+    lineHeight: "1",
+  };
+  const qtyValueStyle: React.CSSProperties = {
+    minWidth: 24,
+    textAlign: "center",
+    fontWeight: 600,
+  };
 
   const renderNoteLabel = (value?: string | null) => {
     const trimmed = value?.trim();
@@ -116,16 +135,26 @@ export default function Home() {
 
     const map: Record<
       string,
-      { qty: number; notes: Set<string>; id: string | number | undefined }
+      {
+        qty: number;
+        notes: Map<string, number>;
+        id: string | number | undefined;
+      }
     > = {};
     data?.forEach((o) =>
       o.items.forEach((it: any) => {
         if (!map[it.name]) {
-          map[it.name] = { qty: 0, notes: new Set(), id: it.id };
+          map[it.name] = {
+            qty: 0,
+            notes: new Map(),
+            id: it.id,
+          };
         }
         map[it.name].qty += it.qty;
         if (it.note && String(it.note).trim()) {
-          map[it.name].notes.add(String(it.note).trim());
+          const noteKey = String(it.note).trim();
+          const current = map[it.name].notes.get(noteKey) || 0;
+          map[it.name].notes.set(noteKey, current + it.qty);
         }
       })
     );
@@ -135,7 +164,10 @@ export default function Home() {
         id: value.id ?? i + 1,
         name,
         qty: value.qty,
-        notes: Array.from(value.notes),
+        notes: Array.from(value.notes.entries()).map(([text, count]) => ({
+          text,
+          count,
+        })),
       }))
     );
   }
@@ -176,6 +208,25 @@ export default function Home() {
         const currentNote = (p.note ?? "").trim();
         return !(p.id === itemId && currentNote === targetNote);
       })
+    );
+  }
+
+  function adjustQty(itemId: number, itemNote: string | undefined, delta: number) {
+    const targetNote = (itemNote ?? "").trim();
+    setOrder((prev) =>
+      prev
+        .map((p) => {
+          const currentNote = (p.note ?? "").trim();
+          if (p.id === itemId && currentNote === targetNote) {
+            const newQty = p.qty + delta;
+            if (newQty <= 0) {
+              return null;
+            }
+            return { ...p, qty: newQty };
+          }
+          return p;
+        })
+        .filter(Boolean) as typeof prev
     );
   }
 
@@ -281,6 +332,7 @@ export default function Home() {
         <select
           value={selectedId}
           onChange={(e) => setSelectedId(e.target.value)}
+          className="full-width"
         >
           {menu.map((m) => (
             <option key={m.id} value={m.id}>
@@ -303,6 +355,7 @@ export default function Home() {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Extra cheese, no onions..."
+          className="full-width"
         />
 
         <div className="actions">
@@ -332,7 +385,27 @@ export default function Home() {
               {order.map((o) => (
                 <tr key={`${o.id}-${o.note ?? "none"}`}>
                   <td>{o.name}</td>
-                  <td>{o.qty}</td>
+                  <td>
+                    <div className="qty-controls" style={qtyControlsStyle}>
+                      <button
+                        type="button"
+                        onClick={() => adjustQty(o.id, o.note, -1)}
+                        aria-label="Decrease quantity"
+                        style={qtyButtonStyle}
+                      >
+                        -
+                      </button>
+                      <span style={qtyValueStyle}>{o.qty}</span>
+                      <button
+                        type="button"
+                        onClick={() => adjustQty(o.id, o.note, 1)}
+                        aria-label="Increase quantity"
+                        style={qtyButtonStyle}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </td>
                   <td>{renderNoteLabel(o.note)}</td>
                   <td>
                     <button
@@ -419,7 +492,12 @@ export default function Home() {
                   <td>{s.qty}</td>
                   <td>
                     {s.notes && s.notes.length
-                      ? s.notes.map((note: string) => `(${note})`).join(" ")
+                      ? `(${s.notes
+                          .map(
+                            (note: { text: string; count: number }) =>
+                              `${note.count} ${note.text}`
+                          )
+                          .join(", ")})`
                       : "-"}
                   </td>
                 </tr>
