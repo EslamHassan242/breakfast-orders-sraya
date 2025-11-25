@@ -84,6 +84,26 @@ input[type="number"] {
 .small-text {
   font-size: 0.85rem;
 }
+.customer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f0f7f6;
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  border: 1px solid #d5ebe7;
+}
+.customer-name {
+  font-weight: 700;
+  color: #0d403a;
+  font-size: 1rem;
+}
+.order-time {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
 .qty-control {
   display: flex;
   align-items: center;

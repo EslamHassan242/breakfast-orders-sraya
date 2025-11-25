@@ -47,31 +47,6 @@ export default function Home() {
     borderRadius: "999px",
     display: "inline-block",
   };
-  const qtyControlsStyle: React.CSSProperties = {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "8px",
-  };
-  const qtyButtonStyle: React.CSSProperties = {
-    width: 32,
-    height: 32,
-    borderRadius: "50%",
-    border: "1px solid #2b7a78",
-    background: "#f4fffd",
-    cursor: "pointer",
-    lineHeight: "1",
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#2b7a78",
-    fontWeight: 700,
-    fontSize: "16px",
-  };
-  const qtyValueStyle: React.CSSProperties = {
-    minWidth: 28,
-    textAlign: "center",
-    fontWeight: 600,
-  };
   const noteSummaryWrapperStyle: React.CSSProperties = {
     display: "inline-block",
   };
@@ -292,24 +267,6 @@ export default function Home() {
     );
   }
 
-  function adjustQty(itemId: number, itemNote: string | undefined, delta: number) {
-    const targetNote = (itemNote ?? "").trim();
-    setOrder((prev) =>
-      prev
-        .map((p) => {
-          const currentNote = (p.note ?? "").trim();
-          if (p.id === itemId && currentNote === targetNote) {
-            const newQty = p.qty + delta;
-            if (newQty <= 0) {
-              return null;
-            }
-            return { ...p, qty: newQty };
-          }
-          return p;
-        })
-        .filter(Boolean) as typeof prev
-    );
-  }
 
   function total() {
     return order.reduce((s, o) => s + o.price * o.qty, 0);
@@ -485,27 +442,7 @@ export default function Home() {
               {order.map((o) => (
                 <tr key={`${o.id}-${o.note ?? "none"}`}>
                   <td>{o.name}</td>
-                  <td>
-                    <div className="qty-controls" style={qtyControlsStyle}>
-                      <button
-                        type="button"
-                        onClick={() => adjustQty(o.id, o.note, -1)}
-                        aria-label="Decrease quantity"
-                        style={qtyButtonStyle}
-                      >
-                        -
-                      </button>
-                      <span style={qtyValueStyle}>{o.qty}</span>
-                      <button
-                        type="button"
-                        onClick={() => adjustQty(o.id, o.note, 1)}
-                        aria-label="Increase quantity"
-                        style={qtyButtonStyle}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
+                  <td>{o.qty}</td>
                   <td>{renderNoteLabel(o.note)}</td>
                   <td>
                     <button
@@ -541,11 +478,11 @@ export default function Home() {
                 className="order-card"
                 style={{ borderBottom: "1px solid #eee", paddingBottom: 12 }}
               >
-                <div className="flex items-center justify-between">
-                  <strong>{o.customer}</strong>
-                  <small className="muted">
+                <div className="customer-header">
+                  <span className="customer-name">{o.customer}</span>
+                  <span className="order-time">
                     {new Date(o.created_at).toLocaleTimeString()}
-                  </small>
+                  </span>
                 </div>
                 <table
                   className="order-table order-table--customer"
