@@ -16,6 +16,7 @@ export default function Home() {
   const [customer, setCustomer] = useState("");
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
+  const [note, setNote] = useState("");
 
   // voting states
   const [sellers, setSellers] = useState<any[]>([]);
@@ -115,17 +116,29 @@ export default function Home() {
     const item = menu.find((m) => String(m.id) === selectedId);
     if (!item) return;
     const q = Math.max(1, Number(qty) || 1);
+    const trimmedNote = note.trim();
     setOrder((prev) => {
-      const exists = prev.find((p) => p.id === item.id);
+      const exists = prev.find(
+        (p) => p.id === item.id && (p.note || "") === trimmedNote
+      );
       if (exists)
         return prev.map((p) =>
-          p.id === item.id ? { ...p, qty: p.qty + q } : p
+          p.id === item.id && (p.note || "") === trimmedNote
+            ? { ...p, qty: p.qty + q }
+            : p
         );
       return [
         ...prev,
-        { id: item.id, name: item.name, price: item.price, qty: q },
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          qty: q,
+          note: trimmedNote,
+        },
       ];
     });
+    setNote("");
   }
 
   function removeItem(id: number) {
@@ -250,6 +263,14 @@ export default function Home() {
           onChange={(e) => setQty(Number(e.target.value))}
         />
 
+        <label>Note (optional)</label>
+        <input
+          type="text"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Extra cheese, no onions..."
+        />
+
         <div className="actions">
           <button onClick={addItem}>Add</button>
           <button onClick={() => setOrder([])} className="secondary">
@@ -275,7 +296,14 @@ export default function Home() {
             <tbody>
               {order.map((o) => (
                 <tr key={o.id}>
-                  <td>{o.name}</td>
+                  <td>
+                    {o.name}
+                    {o.note ? (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        Note: {o.note}
+                      </div>
+                    ) : null}
+                  </td>
                   <td>{o.qty}</td>
                   <td>
                     <button
@@ -318,6 +346,11 @@ export default function Home() {
                   {o.items.map((it: any) => (
                     <div key={it.id}>
                       {it.name} × {it.qty}
+                      {it.note ? (
+                        <div className="muted" style={{ fontSize: 12 }}>
+                          Note: {it.note}
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>
