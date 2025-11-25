@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+
+type NoteSummaryEntry = { text: string; count: number };
+
 // Utility
 function currency(n: number) {
   return `$${n.toFixed(2)}`;
@@ -17,6 +20,7 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
   const [note, setNote] = useState("");
+
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
     color: "#b7791f",
@@ -31,24 +35,57 @@ export default function Home() {
     gap: "8px",
   };
   const qtyButtonStyle: React.CSSProperties = {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     borderRadius: "50%",
-    border: "1px solid #ddd",
-    background: "#f8f8f8",
+    border: "1px solid #2b7a78",
+    background: "#f4fffd",
     cursor: "pointer",
     lineHeight: "1",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#2b7a78",
+    fontWeight: 700,
+    fontSize: "16px",
   };
   const qtyValueStyle: React.CSSProperties = {
-    minWidth: 24,
+    minWidth: 28,
     textAlign: "center",
     fontWeight: 600,
+  };
+  const noteSummaryWrapperStyle: React.CSSProperties = {
+    display: "inline-block",
+  };
+  const noteSummaryPartStyle: React.CSSProperties = {
+    marginInlineEnd: 6,
+    display: "inline-block",
   };
 
   const renderNoteLabel = (value?: string | null) => {
     const trimmed = value?.trim();
     if (!trimmed) return <span className="muted">-</span>;
     return <span style={noteBadgeStyle}>{trimmed}</span>;
+  };
+
+  const renderNoteSummary = (notes?: NoteSummaryEntry[]) => {
+    if (!notes || !notes.length) return <span className="muted">-</span>;
+    return (
+      <span style={noteSummaryWrapperStyle} dir="auto">
+        (
+        {notes.map((note, idx) => (
+          <span
+            key={`${note.text}-${idx}`}
+            style={noteSummaryPartStyle}
+            dir="auto"
+          >
+            {note.count} {note.text}
+            {idx < notes.length - 1 ? ", " : ""}
+          </span>
+        ))}
+        )
+      </span>
+    );
   };
 
   // voting states
@@ -490,16 +527,7 @@ export default function Home() {
                 <tr key={s.id}>
                   <td>{s.name}</td>
                   <td>{s.qty}</td>
-                  <td>
-                    {s.notes && s.notes.length
-                      ? `(${s.notes
-                          .map(
-                            (note: { text: string; count: number }) =>
-                              `${note.count} ${note.text}`
-                          )
-                          .join(", ")})`
-                      : "-"}
-                  </td>
+                  <td>{renderNoteSummary(s.notes)}</td>
                 </tr>
               ))}
             </tbody>

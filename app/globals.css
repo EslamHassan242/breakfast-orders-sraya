@@ -52,8 +52,7 @@ input[type="text"] {
   border-radius: 6px;
   font-size: 1rem;
 }
-input[type="number"],
-input[type="text"] {
+input[type="number"] {
   max-width: 120px;
 }
 .qty-control {
