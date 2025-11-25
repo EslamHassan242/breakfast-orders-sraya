@@ -104,26 +104,6 @@ input[type="number"] {
   font-size: 0.85rem;
   color: var(--muted);
 }
-.qty-control {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.qty-control button {
-  padding: 4px 12px;
-  min-width: 32px;
-  font-size: 16px;
-}
-.qty-control input {
-  width: 60px;
-  text-align: center;
-  -moz-appearance: textfield;
-}
-.qty-control input::-webkit-outer-spin-button,
-.qty-control input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
 .actions {
   margin-top: 12px;
   display: flex;
@@ -171,13 +151,21 @@ textarea {
 }
 .order-table td button {
   padding: 6px 12px;
-  min-width: 60px;
+  min-width: auto;
   font-size: 0.9rem;
 }
+.order-table--current th:nth-child(2),
+.order-table--current th:nth-child(3),
+.order-table--current th:nth-child(4),
 .order-table--current td:nth-child(2),
 .order-table--current td:nth-child(3),
+.order-table--current td:nth-child(4),
+.order-table--customer th:nth-child(2),
+.order-table--customer th:nth-child(3),
 .order-table--customer td:nth-child(2),
 .order-table--customer td:nth-child(3),
+.order-table--summary th:nth-child(2),
+.order-table--summary th:nth-child(3),
 .order-table--summary td:nth-child(2),
 .order-table--summary td:nth-child(3) {
   text-align: center;
@@ -230,22 +218,28 @@ footer {
 }
 
 .remove-btn {
-    border-radius: 50%;
-    padding: 8px;
-    min-width: 0;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff;
-    border: 1px solid #ddd;
-    color: #e00;
-    font-size: 18px;
-  }
-  .remove-btn:hover {
-    background: #ffe5e5;
-  }
+  border: none;
+  background: transparent;
+  padding: 4px;
+  min-width: 0;
+  cursor: pointer;
+  color: #9b1c1c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+.remove-btn:hover {
+  color: #c21f1f;
+}
+.remove-btn:focus-visible {
+  outline: 2px solid rgba(155, 28, 28, 0.4);
+  border-radius: 4px;
+}
+.trash-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
 
 
   .cover {

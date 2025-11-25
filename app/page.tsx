@@ -448,8 +448,11 @@ export default function Home() {
                     <button
                       className="remove-btn"
                       onClick={() => removeItem(o.id, o.note)}
+                      aria-label="Remove item"
                     >
-                      🗑️
+                      <span aria-hidden="true" className="trash-icon">
+                        🗑
+                      </span>
                     </button>
                   </td>
                 </tr>
