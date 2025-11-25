@@ -10,6 +10,20 @@ function currency(n: number) {
   return `$${n.toFixed(2)}`;
 }
 
+const DEFAULT_NOTE_SUGGESTIONS = [
+  "بدون بصل",
+  "بدون بيض",
+  "سبايسي",
+  "زيادة جبنة",
+  "خبز شامي",
+  "خبز بلدي ",
+  " طحينة فقط",
+  "توابل فقط",
+  "كاتشب فقك",
+  "مايونيز فقط",
+  "أقل ملح",
+];
+
 export default function Home() {
   const [menu, setMenu] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState("");
@@ -20,6 +34,10 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
   const [note, setNote] = useState("");
+  const [noteSuggestions, setNoteSuggestions] = useState<string[]>(
+    DEFAULT_NOTE_SUGGESTIONS
+  );
+  const [loadingNotes, setLoadingNotes] = useState(false);
 
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
@@ -106,7 +124,33 @@ export default function Home() {
     loadMenu();
     loadToday();
     loadSellersAndVotes();
+    loadNoteSuggestions();
   }, []);
+  async function loadNoteSuggestions() {
+    setLoadingNotes(true);
+    try {
+      const { data, error } = await supabase
+        .from("note_presets")
+        .select("text")
+        .order("text");
+      if (error) throw error;
+      const cleaned =
+        data
+          ?.map((row: any) => (row?.text || "").trim())
+          .filter((t: string) => t.length > 0) ?? [];
+      if (cleaned.length) {
+        setNoteSuggestions(cleaned);
+      } else {
+        setNoteSuggestions(DEFAULT_NOTE_SUGGESTIONS);
+      }
+    } catch (err) {
+      console.warn("Note presets load failed:", err);
+      setNoteSuggestions(DEFAULT_NOTE_SUGGESTIONS);
+    } finally {
+      setLoadingNotes(false);
+    }
+  }
+
 
   // --- MENU + ORDERS ---
   async function loadMenu() {
@@ -394,6 +438,25 @@ export default function Home() {
           placeholder="Extra cheese, no onions..."
           className="full-width"
         />
+        <div className="note-suggestions">
+          {loadingNotes ? (
+            <span className="muted small-text">Loading suggestions...</span>
+          ) : (
+            noteSuggestions.map((suggestion) => {
+              const isActive = note.trim() === suggestion;
+              return (
+                <button
+                  key={suggestion}
+                  type="button"
+                  className={`note-chip ${isActive ? "selected" : ""}`}
+                  onClick={() => setNote(suggestion)}
+                >
+                  {suggestion}
+                </button>
+              );
+            })
+          )}
+        </div>
 
         <div className="actions">
           <button onClick={addItem}>Add</button>
@@ -409,7 +472,7 @@ export default function Home() {
         {order.length === 0 ? (
           <p>No items yet.</p>
         ) : (
-          <table className="order-table">
+          <table className="order-table order-table--current">
             <thead>
               <tr>
                 <th>Item</th>
@@ -484,7 +547,10 @@ export default function Home() {
                     {new Date(o.created_at).toLocaleTimeString()}
                   </small>
                 </div>
-                <table className="order-table" style={{ marginTop: 8 }}>
+                <table
+                  className="order-table order-table--customer"
+                  style={{ marginTop: 8 }}
+                >
                   <thead>
                     <tr>
                       <th>Item</th>
@@ -514,7 +580,7 @@ export default function Home() {
         {todaySummary.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
-          <table className="order-table">
+          <table className="order-table order-table--summary">
             <thead>
               <tr>
                 <th>Item</th>

@@ -8,7 +8,8 @@
   box-sizing: border-box;
 }
 body {
-  font-family: Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+  font-family: var(--font-tajawal), "Tajawal", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
   background: var(--bg);
   margin: 0;
   padding: 12px;
@@ -54,6 +55,34 @@ input[type="text"] {
 }
 input[type="number"] {
   max-width: 120px;
+}
+.full-width {
+  width: 100%;
+  display: block;
+}
+.note-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.note-chip {
+  border: 1px solid #d6e4e3;
+  background: #f8fffe;
+  color: #2b7a78;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  min-width: 0;
+}
+.note-chip.selected {
+  background: #2b7a78;
+  color: #fff;
+  border-color: #2b7a78;
+}
+.small-text {
+  font-size: 0.85rem;
 }
 .qty-control {
   display: flex;
@@ -104,6 +133,7 @@ button:disabled {
   border-collapse: collapse;
   margin-top: 8px;
   min-width: 320px;
+  table-layout: fixed;
 }
 .order-table th,
 .order-table td {
@@ -111,11 +141,46 @@ button:disabled {
   border-bottom: 1px solid #eee;
   text-align: left;
   white-space: nowrap;
+  word-break: break-word;
 }
 .order-table td button {
   padding: 6px 12px;
   min-width: 60px;
   font-size: 0.9rem;
+}
+.order-table--current th:nth-child(1),
+.order-table--current td:nth-child(1) {
+  width: 42%;
+}
+.order-table--current th:nth-child(2),
+.order-table--current td:nth-child(2) {
+  width: 18%;
+}
+.order-table--current th:nth-child(3),
+.order-table--current td:nth-child(3) {
+  width: 30%;
+}
+.order-table--current th:nth-child(4),
+.order-table--current td:nth-child(4) {
+  width: 10%;
+}
+.order-table--customer th:nth-child(1),
+.order-table--customer td:nth-child(1),
+.order-table--summary th:nth-child(1),
+.order-table--summary td:nth-child(1) {
+  width: 50%;
+}
+.order-table--customer th:nth-child(2),
+.order-table--customer td:nth-child(2),
+.order-table--summary th:nth-child(2),
+.order-table--summary td:nth-child(2) {
+  width: 15%;
+}
+.order-table--customer th:nth-child(3),
+.order-table--customer td:nth-child(3),
+.order-table--summary th:nth-child(3),
+.order-table--summary td:nth-child(3) {
+  width: 35%;
 }
 tfoot td {
   font-weight: 700;
@@ -187,39 +252,6 @@ footer {
 .cover-text p {
   font-size: 1rem;
   margin-top: 4px;
-}
-
-.order-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.order-table th,
-.order-table td {
-  padding: 8px;
-  text-align: left;
-}
-
-.qty-control {
-  display: flex;
-  align-items: center;
-}
-
-.qty-control button {
-  width: 30px;
-  height: 30px;
-}
-
-.remove-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: red;
-  font-size: 14px;
-}
-
-.mobile-icon {
-  display: none;
 }
 
 @media (max-width: 600px) {
