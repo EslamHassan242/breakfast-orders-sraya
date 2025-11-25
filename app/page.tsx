@@ -17,6 +17,20 @@ export default function Home() {
   const [todayOrders, setTodayOrders] = useState<any[]>([]);
   const [todaySummary, setTodaySummary] = useState<any[]>([]);
   const [note, setNote] = useState("");
+  const noteBadgeStyle: React.CSSProperties = {
+    backgroundColor: "#fff7e6",
+    color: "#b7791f",
+    fontSize: "0.75rem",
+    padding: "2px 8px",
+    borderRadius: "999px",
+    display: "inline-block",
+  };
+
+  const renderNoteLabel = (value?: string | null) => {
+    const trimmed = value?.trim();
+    if (!trimmed) return <span className="muted">-</span>;
+    return <span style={noteBadgeStyle}>{trimmed}</span>;
+  };
 
   // voting states
   const [sellers, setSellers] = useState<any[]>([]);
@@ -319,7 +333,7 @@ export default function Home() {
                 <tr key={`${o.id}-${o.note ?? "none"}`}>
                   <td>{o.name}</td>
                   <td>{o.qty}</td>
-                  <td>{o.note || "-"}</td>
+                  <td>{renderNoteLabel(o.note)}</td>
                   <td>
                     <button
                       className="remove-btn"
@@ -347,30 +361,40 @@ export default function Home() {
         {todayOrders.length === 0 ? (
           <p>No orders yet.</p>
         ) : (
-          <table className="order-table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Item</th>
-                <th>Qty</th>
-                <th>Note</th>
-                <th>Time</th>
-              </tr>
-            </thead>
-            <tbody>
-              {todayOrders.flatMap((o) =>
-                o.items.map((it: any, idx: number) => (
-                  <tr key={`${o.id}-${idx}`}>
-                    <td>{o.customer}</td>
-                    <td>{it.name}</td>
-                    <td>{it.qty}</td>
-                    <td>{it.note || "-"}</td>
-                    <td>{new Date(o.created_at).toLocaleTimeString()}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          <div className="space-y-4">
+            {todayOrders.map((o) => (
+              <div
+                key={o.id}
+                className="order-card"
+                style={{ borderBottom: "1px solid #eee", paddingBottom: 12 }}
+              >
+                <div className="flex items-center justify-between">
+                  <strong>{o.customer}</strong>
+                  <small className="muted">
+                    {new Date(o.created_at).toLocaleTimeString()}
+                  </small>
+                </div>
+                <table className="order-table" style={{ marginTop: 8 }}>
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Qty</th>
+                      <th>Note</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {o.items.map((it: any, idx: number) => (
+                      <tr key={`${o.id}-${idx}`}>
+                        <td>{it.name}</td>
+                        <td>{it.qty}</td>
+                        <td>{renderNoteLabel(it.note)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
@@ -393,7 +417,11 @@ export default function Home() {
                 <tr key={s.id}>
                   <td>{s.name}</td>
                   <td>{s.qty}</td>
-                  <td>{s.notes && s.notes.length ? s.notes.join(", ") : "-"}</td>
+                  <td>
+                    {s.notes && s.notes.length
+                      ? s.notes.map((n) => `(${n})`).join(" ")
+                      : "-"}
+                  </td>
                 </tr>
               ))}
             </tbody>
