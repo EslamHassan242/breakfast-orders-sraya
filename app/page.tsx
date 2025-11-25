@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 
@@ -39,14 +39,6 @@ export default function Home() {
     DEFAULT_NOTE_SUGGESTIONS
   );
   const [loadingNotes, setLoadingNotes] = useState(false);
-  const filteredNoteSuggestions = useMemo(() => {
-    const normalized = note.trim().toLowerCase();
-    if (!normalized) return noteSuggestions;
-    const filtered = noteSuggestions.filter((s) =>
-      s.toLowerCase().includes(normalized)
-    );
-    return filtered.length ? filtered : noteSuggestions;
-  }, [note, noteSuggestions]);
 
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
@@ -399,16 +391,22 @@ export default function Home() {
         <label>Note (optional)</label>
         <input
           type="text"
+          list="note-presets"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           placeholder="Extra cheese, no onions..."
           className="full-width"
         />
+        <datalist id="note-presets">
+          {noteSuggestions.map((suggestion) => (
+            <option value={suggestion} key={`option-${suggestion}`} />
+          ))}
+        </datalist>
         <div className="note-suggestions">
           {loadingNotes ? (
             <span className="muted small-text">Loading suggestions...</span>
           ) : (
-            filteredNoteSuggestions.map((suggestion) => {
+            noteSuggestions.map((suggestion) => {
               const isActive = note.trim() === suggestion;
               return (
                 <button
