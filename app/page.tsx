@@ -1,7 +1,14 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import {
+  getRoomId,
+  setRoomId as storeRoomId,
+  clearRoomId,
+  isValidRoomId,
+} from "@/lib/roomUtils";
 
 type NoteSummaryEntry = { text: string; count: number };
 
@@ -26,6 +33,11 @@ const DEFAULT_NOTE_SUGGESTIONS = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [showRoomInfo, setShowRoomInfo] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [menu, setMenu] = useState<any[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [qty, setQty] = useState(1);
@@ -95,13 +107,33 @@ export default function Home() {
     setIsAdmin(!!auth);
   }, []);
 
+  // Check for room ID on mount (from localStorage or URL query)
+  useEffect(() => {
+    // First check URL query parameter (for sharing links)
+    const roomIdFromQuery = searchParams.get("room");
+    if (roomIdFromQuery && isValidRoomId(roomIdFromQuery)) {
+      storeRoomId(roomIdFromQuery); // Store in localStorage
+      setRoomId(roomIdFromQuery); // Update React state
+      router.replace("/"); // Clean URL
+      return;
+    }
+
+    // Then check localStorage
+    const currentRoomId = getRoomId();
+    if (!currentRoomId || !isValidRoomId(currentRoomId)) {
+      router.push("/landing");
+      return;
+    }
+    setRoomId(currentRoomId);
+  }, [router, searchParams]);
 
   useEffect(() => {
+    if (!roomId) return;
     loadMenu();
     loadToday();
     loadSellersAndVotes();
     loadNoteSuggestions();
-  }, []);
+  }, [roomId]);
   async function loadNoteSuggestions() {
     setLoadingNotes(true);
     try {
@@ -148,6 +180,11 @@ export default function Home() {
   }
 
   async function saveOrder() {
+    if (!roomId) {
+      alert("No room selected. Redirecting to landing...");
+      router.push("/landing");
+      return;
+    }
     if (!customer.trim()) return alert("Please enter your name.");
     if (order.length === 0) return alert("No items selected.");
 
@@ -158,6 +195,7 @@ export default function Home() {
           customer,
           items: order,
           total: total(),
+          room_id: roomId,
           created_at: new Date().toISOString(),
         },
       ]);
@@ -174,12 +212,14 @@ export default function Home() {
   }
 
   async function loadToday() {
+    if (!roomId) return;
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
     const { data, error } = await supabase
       .from("orders")
       .select("*")
+      .eq("room_id", roomId)
       .gte("created_at", start.toISOString())
       .order("created_at", { ascending: false });
 
@@ -275,6 +315,7 @@ export default function Home() {
 
   // --- VOTING LOGIC ---
   async function loadSellersAndVotes() {
+    if (!roomId) return;
     setLoadingVotes(true);
     const { data: sellersData } = await supabase.from("sellers").select("*");
     setSellers(sellersData || []);
@@ -284,6 +325,7 @@ export default function Home() {
     const { data: votesData } = await supabase
       .from("votes")
       .select("seller_id")
+      .eq("room_id", roomId)
       .gte("created_at", today.toISOString());
 
     const counts: Record<number, number> = {};
@@ -310,7 +352,12 @@ export default function Home() {
       const { error } = await supabase
         .from("votes")
         .insert([
-          { voter: voterId, seller_id: selectedSeller, ip_address: ip },
+          {
+            voter: voterId,
+            seller_id: selectedSeller,
+            ip_address: ip,
+            room_id: roomId,
+          },
         ]);
 
       if (error) {
@@ -347,9 +394,100 @@ export default function Home() {
     }
   }
 
+  function handleCopyRoomId() {
+    if (!roomId) return;
+    navigator.clipboard.writeText(roomId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleLeaveRoom() {
+    if (confirm("Leave this room? You'll need to rejoin with the Room ID.")) {
+      clearRoomId();
+      router.push("/landing");
+    }
+  }
+
+  function handleShareRoom() {
+    if (!roomId) return;
+    const url = `${window.location.origin}?room=${roomId}`;
+    if (navigator.share) {
+      navigator.share({
+        title: "Join my breakfast ordering room",
+        text: `Join my breakfast ordering room! Room ID: ${roomId}`,
+        url: url,
+      });
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("Room link copied to clipboard!");
+    }
+  }
+
+  // Don't render main UI until room ID is confirmed
+  if (!roomId) {
+    return (
+      <div className="container">
+        <div className="panel" style={{ textAlign: "center" }}>
+          <p>Loading room...</p>
+        </div>
+      </div>
+    );
+  }
+
   // --- UI ---
   return (
     <div className="container">
+      {/* Room Info Banner */}
+      <div className="panel" style={{ background: "#e9f8f7", marginBottom: "16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+          <div style={{ flex: 1, minWidth: "200px" }}>
+            <div style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: "4px" }}>
+              Room ID
+            </div>
+            <code
+              style={{
+                fontFamily: "monospace",
+                fontSize: "0.9rem",
+                background: "#fff",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                border: "1px solid #d5ebe7",
+                display: "inline-block",
+                wordBreak: "break-all",
+              }}
+            >
+              {roomId}
+            </code>
+          </div>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <button
+              onClick={handleCopyRoomId}
+              className="secondary"
+              style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+            >
+              {copied ? "✓ Copied!" : "📋 Copy ID"}
+            </button>
+            <button
+              onClick={handleShareRoom}
+              className="secondary"
+              style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+            >
+              🔗 Share
+            </button>
+            <button
+              onClick={handleLeaveRoom}
+              style={{
+                background: "#dc3545",
+                padding: "8px 16px",
+                fontSize: "0.9rem",
+              }}
+            >
+              🚪 Leave
+            </button>
+          </div>
+        </div>
+      </div>
+
       <div className="cover">
         <img src="/cover.jpg" alt="Sraya Breakfast Cover" />
         <div className="cover-text">
