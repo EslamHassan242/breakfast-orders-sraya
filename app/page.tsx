@@ -605,7 +605,7 @@ function HomeContent() {
         >
           {menu.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name} {m.room_id ? "(Custom)" : ""}
+              {m.name}
             </option>
           ))}
         </select>
