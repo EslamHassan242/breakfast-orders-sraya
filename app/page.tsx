@@ -468,8 +468,30 @@ function HomeContent() {
 
     // Check if voted in THIS room today
     const voteKey = `voted_${roomId}_${today.toDateString()}`;
-    const hasVoted = localStorage.getItem(voteKey) === "true";
-    setVotedToday(hasVoted);
+    const hasVotedLocally = localStorage.getItem(voteKey) === "true";
+    
+    if (hasVotedLocally) {
+      // Double-check: verify the vote still exists in database
+      // (in case the seller was deleted)
+      const deviceId = await getDeviceId();
+      const { data: userVote } = await supabase
+        .from("votes")
+        .select("id")
+        .eq("voter", deviceId)
+        .eq("room_id", roomId)
+        .gte("created_at", today.toISOString())
+        .single();
+      
+      // If vote doesn't exist in DB, clear localStorage and allow voting again
+      if (!userVote) {
+        localStorage.removeItem(voteKey);
+        setVotedToday(false);
+      } else {
+        setVotedToday(true);
+      }
+    } else {
+      setVotedToday(false);
+    }
 
     setLoadingVotes(false);
   }
@@ -674,7 +696,7 @@ function HomeContent() {
       </div>
 
       <div className="cover">
-        <img src={roomCover || "/cover.jpg"} alt="Breakfast Cover" />
+        <img src={roomCover || "/cover.jpg"}  />
         <div className="cover-text">
           <h1>{roomName}</h1>
           <p style={{ margin: 0, opacity: 0.9 }}>🥞 Sharing Orders</p>
