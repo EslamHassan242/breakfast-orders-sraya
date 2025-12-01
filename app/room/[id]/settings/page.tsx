@@ -273,14 +273,14 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
             value={newMenuItem.name}
             onChange={e => setNewMenuItem({...newMenuItem, name: e.target.value})}
             placeholder="Item Name"
-            style={{ flex: 2, padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+            style={{ flex: 2, padding: 10, borderRadius: 6, border: "1px solid #ddd", fontSize: "16px" }}
           />
           <input 
             type="number"
             value={newMenuItem.price}
             onChange={e => setNewMenuItem({...newMenuItem, price: e.target.value})}
             placeholder="Price"
-            style={{ flex: 1, padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+            style={{ flex: 1, padding: 10, borderRadius: 6, border: "1px solid #ddd", fontSize: "16px" }}
           />
           <button onClick={addMenuItem} style={{ padding: "10px 20px", background: "#000", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Add</button>
         </div>
@@ -304,7 +304,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
             value={newSellerName}
             onChange={e => setNewSellerName(e.target.value)}
             placeholder="Seller Name"
-            style={{ flex: 1, padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+            style={{ flex: 1, padding: 10, borderRadius: 6, border: "1px solid #ddd", fontSize: "16px" }}
           />
           <button onClick={addSeller} style={{ padding: "10px 20px", background: "#000", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Add</button>
         </div>
