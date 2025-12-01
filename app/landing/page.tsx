@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   generateRoomId,
@@ -8,7 +8,7 @@ import {
   getRoomId,
 } from "@/lib/roomUtils";
 
-export default function LandingPage() {
+function LandingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [roomIdInput, setRoomIdInput] = useState("");
@@ -177,6 +177,14 @@ export default function LandingPage() {
         <small>Day By Day Breakfast Ordering for Sraya</small>
       </footer>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LandingContent />
+    </Suspense>
   );
 }
 
