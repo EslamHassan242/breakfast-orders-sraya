@@ -18,6 +18,8 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
   const [sellers, setSellers] = useState<any[]>([]);
   const [newSellerName, setNewSellerName] = useState("");
 
+  const [uploading, setUploading] = useState(false);
+
   useEffect(() => {
     loadRoomDetails();
     loadMenu();
@@ -34,7 +36,6 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
     if (data) {
       setRoomName(data.name || "Untitled Room");
       setCoverUrl(data.cover_image_url || "");
-      setNewCoverUrl(data.cover_image_url || "");
     }
   }
 
@@ -55,29 +56,60 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
     setSellers(data || []);
   }
 
-  async function updateCover() {
-    const { error } = await supabase
-      .from("rooms")
-      .update({ cover_image_url: newCoverUrl })
-      .eq("id", roomId);
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || e.target.files.length === 0) return;
     
-    if (error) alert("Failed to update cover");
-    else {
-      setCoverUrl(newCoverUrl);
-      alert("Cover updated!");
+    const file = e.target.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${roomId}-${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    setUploading(true);
+
+    try {
+      const { error: uploadError } = await supabase.storage
+        .from('covers')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('covers').getPublicUrl(filePath);
+      const publicUrl = data.publicUrl;
+
+      // Update room with new cover
+      const { error: updateError } = await supabase
+        .from("rooms")
+        .update({ cover_image_url: publicUrl })
+        .eq("id", roomId);
+
+      if (updateError) throw updateError;
+
+      setCoverUrl(publicUrl);
+      alert("Cover image updated successfully!");
+    } catch (error: any) {
+      console.error("Upload failed:", error);
+      alert(`Upload failed: ${error.message}`);
+    } finally {
+      setUploading(false);
     }
   }
 
   async function addMenuItem() {
-    if (!newMenuItem.name || !newMenuItem.price) return;
+    if (!newMenuItem.name || !newMenuItem.price) return alert("Please enter name and price");
+    
+    const price = Number(newMenuItem.price);
+    if (isNaN(price)) return alert("Invalid price");
+
     const { error } = await supabase.from("menu").insert([{
       name: newMenuItem.name,
-      price: Number(newMenuItem.price),
+      price: price,
       room_id: roomId
     }]);
 
-    if (error) alert("Failed to add item");
-    else {
+    if (error) {
+      console.error("Add item failed:", error);
+      alert(`Failed to add item: ${error.message}`);
+    } else {
       setNewMenuItem({ name: "", price: "" });
       loadMenu();
     }
@@ -96,8 +128,10 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
       room_id: roomId
     }]);
 
-    if (error) alert("Failed to add seller");
-    else {
+    if (error) {
+       console.error("Add seller failed:", error);
+       alert(`Failed to add seller: ${error.message}`);
+    } else {
       setNewSellerName("");
       loadSellers();
     }
@@ -120,17 +154,23 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
       {/* Cover Image */}
       <div className="panel" style={{ background: "#fff", padding: 20, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", marginBottom: 24 }}>
         <h2 style={{ marginTop: 0 }}>🖼️ Cover Image</h2>
-        <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>Upload New Cover</label>
           <input 
-            value={newCoverUrl}
-            onChange={e => setNewCoverUrl(e.target.value)}
-            placeholder="https://example.com/image.jpg"
-            style={{ flex: 1, padding: 10, borderRadius: 6, border: "1px solid #ddd" }}
+            type="file" 
+            accept="image/*"
+            onChange={handleImageUpload}
+            disabled={uploading}
+            style={{ display: "block", width: "100%" }}
           />
-          <button onClick={updateCover} style={{ padding: "10px 20px", background: "#000", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}>Update</button>
+          {uploading && <p style={{ color: "#666", fontSize: "0.9rem" }}>Uploading...</p>}
         </div>
+        
         {coverUrl && (
-          <img src={coverUrl} alt="Cover Preview" style={{ width: "100%", maxHeight: 200, objectFit: "cover", borderRadius: 8 }} />
+          <div>
+            <p style={{ marginBottom: 8, fontWeight: 500 }}>Current Cover:</p>
+            <img src={coverUrl} alt="Cover Preview" style={{ width: "100%", maxHeight: 300, objectFit: "cover", borderRadius: 8 }} />
+          </div>
         )}
       </div>
 

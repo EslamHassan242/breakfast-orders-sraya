@@ -404,6 +404,8 @@ function HomeContent() {
       const ip = await getPublicIp();
       const voterId = await getDeviceId();
 
+      console.log("Voting:", { voterId, selectedSeller, ip, roomId });
+
       const { error } = await supabase
         .from("votes")
         .insert([
@@ -416,17 +418,18 @@ function HomeContent() {
         ]);
 
       if (error) {
+        console.error("Vote error:", error);
         if (error.message.includes("duplicate key"))
           return alert("You already voted today from this device.");
-        console.error(error);
-        return alert("Vote failed.");
+        return alert(`Vote failed: ${error.message}`);
       }
 
       localStorage.setItem("voted_date", new Date().toDateString());
       setVotedToday(true);
       await loadSellersAndVotes();
     } catch (err) {
-      console.error("Vote failed:", err);
+      console.error("Vote exception:", err);
+      alert("Vote failed due to an unexpected error.");
     }
   }
 
