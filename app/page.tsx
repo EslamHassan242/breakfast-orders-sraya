@@ -193,13 +193,17 @@ function HomeContent() {
     try {
       const { data, error } = await supabase
         .from("note_presets")
-        .select("text")
-        .order("text");
+        .select("text, usage_count")
+        .order("usage_count", { ascending: false })
+        .limit(5);
+      
       if (error) throw error;
+      
       const cleaned =
         data
           ?.map((row: any) => (row?.text || "").trim())
           .filter((t: string) => t.length > 0) ?? [];
+      
       if (cleaned.length) {
         setNoteSuggestions(cleaned);
       } else {
@@ -240,6 +244,33 @@ function HomeContent() {
     }
   }
 
+  async function saveNoteToDatabase(noteText: string) {
+    if (!noteText.trim()) return;
+    
+    // Check if note already exists
+    const { data: existing } = await supabase
+      .from("note_presets")
+      .select("id, usage_count")
+      .eq("text", noteText.trim())
+      .single();
+    
+    if (existing) {
+      // Increment usage count
+      await supabase
+        .from("note_presets")
+        .update({ usage_count: (existing.usage_count || 0) + 1 })
+        .eq("id", existing.id);
+    } else {
+      // Insert new note
+      await supabase
+        .from("note_presets")
+        .insert([{ text: noteText.trim(), usage_count: 1 }]);
+    }
+    
+    // Reload suggestions to show updated top 5
+    loadNoteSuggestions();
+  }
+
   async function saveOrder() {
     if (!roomId) {
       alert("No room selected. Redirecting to landing...");
@@ -260,6 +291,12 @@ function HomeContent() {
 
     setSaving(true);
     try {
+      // Save all notes from the order to database
+      const uniqueNotes = [...new Set(order.map(o => o.note).filter(n => n && n.trim()))];
+      for (const noteText of uniqueNotes) {
+        await saveNoteToDatabase(noteText);
+      }
+
       const { error } = await supabase.from("orders").insert([
         {
           customer: customer || localStorage.getItem("customerName"), // Ensure we use the latest

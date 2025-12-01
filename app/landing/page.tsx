@@ -215,7 +215,7 @@ function LandingContent() {
              <div className="input-group">
               <label>Your Name</label>
               <input 
-                placeholder="e.g. Eslam" 
+                placeholder="Enter your name" 
                 value={userName}
                 onChange={e => setUserName(e.target.value)}
               />
