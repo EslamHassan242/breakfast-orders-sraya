@@ -673,6 +673,10 @@ footer {
   .container {
     padding-top: 80px;
   }
+
+  .room-id-card {
+    display: none; /* Hide big card on mobile */
+  }
 }
 
 @media (min-width: 769px) {

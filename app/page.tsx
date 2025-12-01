@@ -645,6 +645,11 @@ function HomeContent() {
 
       {/* --- Mobile Menu Overlay --- */}
       <div className={`mobile-menu-overlay ${isMobileMenuOpen ? "open" : ""}`}>
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <div style={{ fontSize: "0.8rem", color: "#888", textTransform: "uppercase", letterSpacing: "1px", fontWeight: 600 }}>Current Room</div>
+          <div style={{ fontSize: "1.8rem", fontWeight: 800, color: "#333", fontFamily: "monospace" }}>{roomId}</div>
+        </div>
+
         <button className="mobile-nav-item" onClick={() => { handleCopyRoomId(); setIsMobileMenuOpen(false); }}>
           <span className="mobile-nav-icon">{copied ? "✓" : "📋"}</span>
           <span>{copied ? "Copied!" : "Copy ID"}</span>
