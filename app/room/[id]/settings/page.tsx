@@ -347,7 +347,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {menuItems.map(item => (
             <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px", background: "#f9f9f9", borderRadius: 6 }}>
-              {editingMenuItem?.id === item.id ? (
+              {editingMenuItem?.id === item.id && editingMenuItem ? (
                 <>
                   <div style={{ display: "flex", gap: 8, flex: 1 }}>
                     <input 
