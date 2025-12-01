@@ -208,7 +208,7 @@ function LandingContent() {
       `}</style>
 
       <div className="landing-card">
-        <div className="logo">🔄</div>
+        <div className="logo">🍔</div>
         <h1>OrderSync</h1>
         <p>Sync your group's cravings in seconds.</p>
 

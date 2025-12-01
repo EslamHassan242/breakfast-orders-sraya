@@ -62,6 +62,31 @@ function HomeContent() {
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState("");
 
+  // Navigation State
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Adjust body padding on desktop based on sidebar state
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        if (isSidebarCollapsed) {
+          document.body.classList.remove("sidebar-expanded");
+        } else {
+          document.body.classList.add("sidebar-expanded");
+        }
+      } else {
+        document.body.classList.remove("sidebar-expanded");
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isSidebarCollapsed]);
+
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
     color: "#b7791f",
@@ -610,27 +635,85 @@ function HomeContent() {
   // --- UI ---
   return (
     <div className="container">
+      {/* --- Mobile Menu Button --- */}
+      <button 
+        className="mobile-menu-btn"
+        onClick={() => setIsMobileMenuOpen(true)}
+      >
+        <span style={{ fontSize: "1.5rem" }}>☰</span>
+      </button>
+
+      {/* --- Mobile Menu Overlay --- */}
+      <div className={`mobile-menu-overlay ${isMobileMenuOpen ? "open" : ""}`}>
+        <button 
+          onClick={() => setIsMobileMenuOpen(false)}
+          style={{ position: "absolute", top: 20, right: 20, background: "none", border: "none", fontSize: "2rem", cursor: "pointer" }}
+        >
+          ✕
+        </button>
+        
+        <button className="mobile-nav-item" onClick={() => { handleCopyRoomId(); setIsMobileMenuOpen(false); }}>
+          {copied ? "✓ Copied!" : "📋 Copy ID"}
+        </button>
+        <button className="mobile-nav-item" onClick={() => { handleShareRoom(); setIsMobileMenuOpen(false); }}>
+          🔗 Share Link
+        </button>
+        <Link href={`/room/${roomId}/settings`} className="mobile-nav-item" onClick={() => setIsMobileMenuOpen(false)}>
+          ⚙️ Settings
+        </Link>
+        <button className="mobile-nav-item" onClick={() => { handleLeaveRoom(); setIsMobileMenuOpen(false); }} style={{ color: "#dc3545" }}>
+          🚪 Leave Room
+        </button>
+      </div>
+
+      {/* --- Desktop Sidebar --- */}
+      <div className={`sidebar ${isSidebarCollapsed ? "collapsed" : "expanded"}`}>
+        <div className="sidebar-header">
+          <button 
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.5rem", color: "#333" }}
+          >
+            {isSidebarCollapsed ? "☰" : "✕"}
+          </button>
+        </div>
+        
+        <div className="sidebar-nav">
+          <button className="nav-item" onClick={handleCopyRoomId} title="Copy Room ID">
+            <span className="nav-icon">{copied ? "✓" : "📋"}</span>
+            <span className="nav-text">{copied ? "Copied!" : "Copy ID"}</span>
+          </button>
+          
+          <button className="nav-item" onClick={handleShareRoom} title="Share Link">
+            <span className="nav-icon">🔗</span>
+            <span className="nav-text">Share Link</span>
+          </button>
+          
+          <Link href={`/room/${roomId}/settings`} className="nav-item" title="Settings">
+            <span className="nav-icon">⚙️</span>
+            <span className="nav-text">Settings</span>
+          </Link>
+          
+          <div style={{ flex: 1 }}></div>
+          
+          <button className="nav-item" onClick={handleLeaveRoom} title="Leave Room" style={{ color: "#dc3545" }}>
+            <span className="nav-icon">🚪</span>
+            <span className="nav-text">Leave Room</span>
+          </button>
+        </div>
+      </div>
+
       {/* Room Info Banner */}
-      <div style={{ 
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        borderRadius: "16px",
-        padding: "20px 24px",
-        marginBottom: "20px",
-        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)"
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
-          <div style={{ flex: 1, minWidth: "200px" }}>
-            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginBottom: "6px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Room ID
+      <div className="room-info-banner">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <div style={{ fontSize: "0.85rem", opacity: 0.8, textTransform: "uppercase", letterSpacing: "1px" }}>
+              Current Room
             </div>
             <code
               style={{
-                fontFamily: "monospace",
-                fontSize: "1rem",
-                background: "rgba(255,255,255,0.2)",
-                backdropFilter: "blur(10px)",
-                color: "#fff",
-                padding: "8px 14px",
+                fontSize: "1.2rem",
+                background: "rgba(0,0,0,0.2)",
+                padding: "4px 8px",
                 borderRadius: "8px",
                 border: "1px solid rgba(255,255,255,0.3)",
                 display: "inline-block",
@@ -640,70 +723,6 @@ function HomeContent() {
             >
               {roomId}
             </code>
-          </div>
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-            <button
-              onClick={handleCopyRoomId}
-              style={{ 
-                padding: "10px 18px", 
-                fontSize: "0.9rem",
-                background: "rgba(255,255,255,0.25)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "#fff",
-                borderRadius: "8px",
-                fontWeight: 600,
-                transition: "all 0.2s"
-              }}
-            >
-              {copied ? "✓ Copied!" : "📋 Copy"}
-            </button>
-            <button
-              onClick={handleShareRoom}
-              style={{ 
-                padding: "10px 18px", 
-                fontSize: "0.9rem",
-                background: "rgba(255,255,255,0.25)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "#fff",
-                borderRadius: "8px",
-                fontWeight: 600
-              }}
-            >
-              🔗 Share
-            </button>
-            <Link
-              href={`/room/${roomId}/settings`}
-              style={{
-                textDecoration: "none",
-                background: "rgba(255,255,255,0.25)",
-                backdropFilter: "blur(10px)",
-                border: "1px solid rgba(255,255,255,0.3)",
-                color: "#fff",
-                padding: "10px 18px",
-                fontSize: "0.9rem",
-                borderRadius: "8px",
-                fontWeight: 600,
-                display: "inline-block"
-              }}
-            >
-              ⚙️ Settings
-            </Link>
-            <button
-              onClick={handleLeaveRoom}
-              style={{
-                background: "rgba(220, 53, 69, 0.9)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                color: "#fff",
-                padding: "10px 18px",
-                fontSize: "0.9rem",
-                borderRadius: "8px",
-                fontWeight: 600
-              }}
-            >
-              🚪 Leave
-            </button>
           </div>
         </div>
       </div>
