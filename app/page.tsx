@@ -629,7 +629,7 @@ export default function Home() {
                 <div className="customer-header">
                   <span className="customer-name">{o.customer}</span>
                   <span className="order-time">
-                    {new Date(o.created_at).toLocaleTimeString()}
+                  {new Date(o.created_at).toLocaleTimeString()}
                   </span>
                 </div>
                 <table
