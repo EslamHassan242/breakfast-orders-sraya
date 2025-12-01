@@ -146,11 +146,32 @@ function HomeContent() {
 
   useEffect(() => {
     if (!roomId) return;
-    loadRoomDetails();
-    loadMenu();
-    loadToday();
-    loadSellersAndVotes();
-    loadNoteSuggestions();
+    
+    // Validate room exists in database
+    async function validateRoom() {
+      const { data, error } = await supabase
+        .from("rooms")
+        .select("id")
+        .eq("id", roomId)
+        .single();
+      
+      if (error || !data) {
+        // Room doesn't exist in database
+        alert("This room no longer exists. Please create a new room.");
+        clearRoomId();
+        router.push("/landing");
+        return;
+      }
+      
+      // Room exists, proceed with loading
+      loadRoomDetails();
+      loadMenu();
+      loadToday();
+      loadSellersAndVotes();
+      loadNoteSuggestions();
+    }
+    
+    validateRoom();
   }, [roomId]);
 
   async function loadRoomDetails() {
