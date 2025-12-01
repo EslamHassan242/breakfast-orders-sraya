@@ -232,7 +232,7 @@ function LandingContent() {
                 setMode("create");
               }}
             >
-              🆕 Create New Room
+               Create New Room
             </button>
             <button 
               className="btn btn-secondary"

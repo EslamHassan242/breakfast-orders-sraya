@@ -197,7 +197,7 @@ function HomeContent() {
         .from("note_presets")
         .select("text, usage_count")
         .order("usage_count", { ascending: false })
-        .limit(5);
+        .limit(10);
       
       if (topError) throw topError;
       
@@ -572,39 +572,65 @@ function HomeContent() {
   return (
     <div className="container">
       {/* Room Info Banner */}
-      <div className="panel" style={{ background: "#e9f8f7", marginBottom: "16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
+      <div style={{ 
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        borderRadius: "16px",
+        padding: "20px 24px",
+        marginBottom: "20px",
+        boxShadow: "0 4px 12px rgba(102, 126, 234, 0.2)"
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
           <div style={{ flex: 1, minWidth: "200px" }}>
-            <div style={{ fontSize: "0.85rem", color: "var(--muted)", marginBottom: "4px" }}>
+            <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.8)", marginBottom: "6px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" }}>
               Room ID
             </div>
             <code
               style={{
                 fontFamily: "monospace",
-                fontSize: "0.9rem",
-                background: "#fff",
-                padding: "6px 12px",
-                borderRadius: "6px",
-                border: "1px solid #d5ebe7",
+                fontSize: "1rem",
+                background: "rgba(255,255,255,0.2)",
+                backdropFilter: "blur(10px)",
+                color: "#fff",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255,255,255,0.3)",
                 display: "inline-block",
                 wordBreak: "break-all",
+                fontWeight: 600
               }}
             >
               {roomId}
             </code>
           </div>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
             <button
               onClick={handleCopyRoomId}
-              className="secondary"
-              style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+              style={{ 
+                padding: "10px 18px", 
+                fontSize: "0.9rem",
+                background: "rgba(255,255,255,0.25)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "#fff",
+                borderRadius: "8px",
+                fontWeight: 600,
+                transition: "all 0.2s"
+              }}
             >
-              {copied ? "✓ Copied!" : "📋 Copy ID"}
+              {copied ? "✓ Copied!" : "📋 Copy"}
             </button>
             <button
               onClick={handleShareRoom}
-              className="secondary"
-              style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+              style={{ 
+                padding: "10px 18px", 
+                fontSize: "0.9rem",
+                background: "rgba(255,255,255,0.25)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "#fff",
+                borderRadius: "8px",
+                fontWeight: 600
+              }}
             >
               🔗 Share
             </button>
@@ -612,12 +638,14 @@ function HomeContent() {
               href={`/room/${roomId}/settings`}
               style={{
                 textDecoration: "none",
-                background: "#f5f5f5",
-                color: "#333",
-                padding: "8px 16px",
+                background: "rgba(255,255,255,0.25)",
+                backdropFilter: "blur(10px)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                color: "#fff",
+                padding: "10px 18px",
                 fontSize: "0.9rem",
-                borderRadius: "6px",
-                border: "1px solid #ddd",
+                borderRadius: "8px",
+                fontWeight: 600,
                 display: "inline-block"
               }}
             >
@@ -626,9 +654,13 @@ function HomeContent() {
             <button
               onClick={handleLeaveRoom}
               style={{
-                background: "#dc3545",
-                padding: "8px 16px",
+                background: "rgba(220, 53, 69, 0.9)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                color: "#fff",
+                padding: "10px 18px",
                 fontSize: "0.9rem",
+                borderRadius: "8px",
+                fontWeight: 600
               }}
             >
               🚪 Leave
@@ -865,12 +897,12 @@ function HomeContent() {
         </div>
       </div>
       {/* ADMIN ENTRY */}
-      <div className="panel" style={{ textAlign: "center" }}>
+      {/* <div className="panel" style={{ textAlign: "center" }}>
         <Link href="/admin/login">Go to Admin</Link>
-      </div>
+      </div> */}
 
       <footer>
-        <small>Day By Day Breakfast Ordering for Sraya</small>
+        <small>Day By Day Order Sharing</small>
       </footer>
     </div>
   );
