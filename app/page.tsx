@@ -637,32 +637,32 @@ function HomeContent() {
     <div className="container">
       {/* --- Mobile Menu Button --- */}
       <button 
-        className="mobile-menu-btn"
-        onClick={() => setIsMobileMenuOpen(true)}
+        className={`mobile-menu-btn ${isMobileMenuOpen ? "open" : ""}`}
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       >
         <div className="hamburger-icon"></div>
       </button>
 
       {/* --- Mobile Menu Overlay --- */}
       <div className={`mobile-menu-overlay ${isMobileMenuOpen ? "open" : ""}`}>
-        <button 
-          className="mobile-close-btn"
-          onClick={() => setIsMobileMenuOpen(false)}
-        >
-          ✕
+        <button className="mobile-nav-item" onClick={() => { handleCopyRoomId(); setIsMobileMenuOpen(false); }}>
+          <span className="mobile-nav-icon">{copied ? "✓" : "📋"}</span>
+          <span>{copied ? "Copied!" : "Copy ID"}</span>
         </button>
         
-        <button className="mobile-nav-item" onClick={() => { handleCopyRoomId(); setIsMobileMenuOpen(false); }}>
-          {copied ? "✓ Copied!" : "📋 Copy ID"}
-        </button>
         <button className="mobile-nav-item" onClick={() => { handleShareRoom(); setIsMobileMenuOpen(false); }}>
-          🔗 Share Link
+          <span className="mobile-nav-icon">🔗</span>
+          <span>Share Link</span>
         </button>
+        
         <Link href={`/room/${roomId}/settings`} className="mobile-nav-item" onClick={() => setIsMobileMenuOpen(false)}>
-          ⚙️ Settings
+          <span className="mobile-nav-icon">⚙️</span>
+          <span>Settings</span>
         </Link>
-        <button className="mobile-nav-item" onClick={() => { handleLeaveRoom(); setIsMobileMenuOpen(false); }} style={{ color: "#dc3545", background: "#fff5f5" }}>
-          🚪 Leave Room
+        
+        <button className="mobile-nav-item" onClick={() => { handleLeaveRoom(); setIsMobileMenuOpen(false); }} style={{ color: "#dc3545", borderColor: "#dc3545" }}>
+          <span className="mobile-nav-icon">🚪</span>
+          <span>Leave Room</span>
         </button>
       </div>
 
@@ -702,12 +702,19 @@ function HomeContent() {
         </div>
       </div>
 
-      {/* Room ID Card */}
+      {/* Room ID Card (Compact) */}
       <div className="room-id-card">
-        <div className="room-id-label">Current Room ID</div>
-        <div className="room-id-value">{roomId}</div>
-        <div style={{ fontSize: "0.9rem", color: "#666" }}>
-          Share this ID with your friends to join!
+        <div className="room-id-content">
+          <div className="room-id-label">Room ID</div>
+          <div className="room-id-value">{roomId}</div>
+        </div>
+        <div className="room-id-actions">
+          <button className="icon-btn" onClick={handleCopyRoomId} title="Copy ID">
+            {copied ? "✓" : "📋"}
+          </button>
+          <button className="icon-btn" onClick={handleShareRoom} title="Share Link">
+            🔗
+          </button>
         </div>
       </div>
 
