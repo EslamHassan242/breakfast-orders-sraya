@@ -53,13 +53,9 @@ function HomeContent() {
     DEFAULT_NOTE_SUGGESTIONS
   );
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [roomName, setRoomName] = useState("");
   const [roomCover, setRoomCover] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
-
-  // Room Settings State
-  const [newCoverUrl, setNewCoverUrl] = useState("");
-  const [newMenuItem, setNewMenuItem] = useState({ name: "", price: "" });
-  const [newSellerName, setNewSellerName] = useState("");
 
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
@@ -114,6 +110,18 @@ function HomeContent() {
   useEffect(() => {
     const auth = localStorage.getItem("adminAuth");
     setIsAdmin(!!auth);
+    
+    // Load customer name
+    const storedName = localStorage.getItem("customerName");
+    if (storedName) {
+      setCustomer(storedName);
+    } else {
+      // If no name, redirect to landing to set it
+      // router.push("/landing"); 
+      // Actually, let's just let them be, but maybe prompt?
+      // The requirement said "user can join with room id and should enter his name sothat he uses it in the room for everything"
+      // I'll assume they come from landing page which sets it.
+    }
   }, []);
 
   // Check for room ID on mount (from localStorage or URL query)
@@ -149,63 +157,13 @@ function HomeContent() {
     if (!roomId) return;
     const { data, error } = await supabase
       .from("rooms")
-      .select("cover_image_url")
+      .select("cover_image_url, name")
       .eq("id", roomId)
       .single();
     
     if (data) {
       setRoomCover(data.cover_image_url);
-      setNewCoverUrl(data.cover_image_url || "");
-    }
-  }
-
-  async function updateRoomCover() {
-    if (!roomId) return;
-    const { error } = await supabase
-      .from("rooms")
-      .update({ cover_image_url: newCoverUrl })
-      .eq("id", roomId);
-    
-    if (error) {
-      alert("Failed to update cover image");
-    } else {
-      setRoomCover(newCoverUrl);
-      alert("Cover image updated!");
-    }
-  }
-
-  async function addRoomMenuItem() {
-    if (!roomId || !newMenuItem.name || !newMenuItem.price) return;
-    const { error } = await supabase.from("menu").insert([
-      {
-        name: newMenuItem.name,
-        price: Number(newMenuItem.price),
-        room_id: roomId
-      }
-    ]);
-
-    if (error) {
-      alert("Failed to add item");
-    } else {
-      setNewMenuItem({ name: "", price: "" });
-      loadMenu();
-    }
-  }
-
-  async function addRoomSeller() {
-    if (!roomId || !newSellerName.trim()) return;
-    const { error } = await supabase.from("sellers").insert([
-      {
-        name: newSellerName,
-        room_id: roomId
-      }
-    ]);
-
-    if (error) {
-      alert("Failed to add seller");
-    } else {
-      setNewSellerName("");
-      loadSellersAndVotes();
+      setRoomName(data.name || "Breakfast Room");
     }
   }
 
@@ -267,14 +225,23 @@ function HomeContent() {
       router.push("/landing");
       return;
     }
-    if (!customer.trim()) return alert("Please enter your name.");
+    if (!customer.trim()) {
+       // If name is missing, prompt for it
+       const name = prompt("Please enter your name:");
+       if (name) {
+         setCustomer(name);
+         localStorage.setItem("customerName", name);
+       } else {
+         return alert("Name is required.");
+       }
+    }
     if (order.length === 0) return alert("No items selected.");
 
     setSaving(true);
     try {
       const { error } = await supabase.from("orders").insert([
         {
-          customer,
+          customer: customer || localStorage.getItem("customerName"), // Ensure we use the latest
           items: order,
           total: total(),
           room_id: roomId,
@@ -562,13 +529,21 @@ function HomeContent() {
             >
               🔗 Share
             </button>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="secondary"
-              style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+            <Link
+              href={`/room/${roomId}/settings`}
+              style={{
+                textDecoration: "none",
+                background: "#f5f5f5",
+                color: "#333",
+                padding: "8px 16px",
+                fontSize: "0.9rem",
+                borderRadius: "6px",
+                border: "1px solid #ddd",
+                display: "inline-block"
+              }}
             >
               ⚙️ Settings
-            </button>
+            </Link>
             <button
               onClick={handleLeaveRoom}
               style={{
@@ -583,75 +558,20 @@ function HomeContent() {
         </div>
       </div>
 
-      {/* Room Settings Panel */}
-      {showSettings && (
-        <div className="panel" style={{ border: "2px solid #b197fc" }}>
-          <h3>⚙️ Room Settings</h3>
-          
-          <div style={{ marginBottom: 20 }}>
-            <label>Cover Image URL</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input 
-                value={newCoverUrl} 
-                onChange={e => setNewCoverUrl(e.target.value)} 
-                placeholder="https://example.com/image.jpg"
-                style={{ flex: 1 }}
-              />
-              <button onClick={updateRoomCover}>Update</button>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: 20 }}>
-            <label>Add Menu Item (for this room)</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input 
-                placeholder="Item Name"
-                value={newMenuItem.name}
-                onChange={e => setNewMenuItem({...newMenuItem, name: e.target.value})}
-                style={{ flex: 2 }}
-              />
-              <input 
-                placeholder="Price"
-                type="number"
-                value={newMenuItem.price}
-                onChange={e => setNewMenuItem({...newMenuItem, price: e.target.value})}
-                style={{ flex: 1 }}
-              />
-              <button onClick={addRoomMenuItem}>Add</button>
-            </div>
-          </div>
-
-          <div>
-            <label>Add Seller (for this room)</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input 
-                placeholder="Seller Name"
-                value={newSellerName}
-                onChange={e => setNewSellerName(e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <button onClick={addRoomSeller}>Add</button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="cover">
         <img src={roomCover || "/cover.jpg"} alt="Sraya Breakfast Cover" />
         <div className="cover-text">
-          <h1>🥞 Sraya Breakfast Orders</h1>
+          <h1>{roomName}</h1>
+          <p style={{ margin: 0, opacity: 0.9 }}>🥞 Sraya Breakfast Orders</p>
         </div>
       </div>
 
       {/* ORDER FORM */}
       <div className="panel">
-        <label>Name</label>
-        <input
-          type="text"
-          value={customer}
-          onChange={(e) => setCustomer(e.target.value)}
-          className="full-width"
-        />
+        {/* Name input removed - using stored name */}
+        <div style={{ marginBottom: 16, color: "#666" }}>
+          Ordering as: <strong>{customer}</strong>
+        </div>
 
         <label>Item</label>
         <select
