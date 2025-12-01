@@ -215,8 +215,14 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
   }
 
   async function deleteSeller(id: number) {
-    if (!confirm("Delete this seller?")) return;
+    if (!confirm("Delete this seller? This will also remove all votes for this seller.")) return;
+    
+    // First delete all votes for this seller
+    await supabase.from("votes").delete().eq("seller_id", id);
+    
+    // Then delete the seller
     await supabase.from("sellers").delete().eq("id", id);
+    
     loadSellers();
   }
 

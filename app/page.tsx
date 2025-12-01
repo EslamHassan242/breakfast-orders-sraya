@@ -179,13 +179,17 @@ function HomeContent() {
     if (!roomId) return;
     const { data, error } = await supabase
       .from("rooms")
-      .select("cover_image_url, name")
+      .select("name, cover_image_url")
       .eq("id", roomId)
       .single();
-    
+
     if (data) {
-      setRoomCover(data.cover_image_url);
       setRoomName(data.name || "Breakfast Room");
+      // Use default cover if none is set
+      setRoomCover(data.cover_image_url || "/cover.jpeg");
+    } else {
+      setRoomName("Breakfast Room");
+      setRoomCover("/cover.jpeg");
     }
   }
 
