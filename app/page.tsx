@@ -53,6 +53,7 @@ function HomeContent() {
     DEFAULT_NOTE_SUGGESTIONS
   );
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [allNotes, setAllNotes] = useState<string[]>([]);
   const [roomName, setRoomName] = useState("");
   const [roomCover, setRoomCover] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
@@ -191,24 +192,38 @@ function HomeContent() {
   async function loadNoteSuggestions() {
     setLoadingNotes(true);
     try {
-      const { data, error } = await supabase
+      // Load top 5 for chips
+      const { data: topData, error: topError } = await supabase
         .from("note_presets")
         .select("text, usage_count")
         .order("usage_count", { ascending: false })
         .limit(5);
       
-      if (error) throw error;
+      if (topError) throw topError;
       
-      const cleaned =
-        data
+      const topCleaned =
+        topData
           ?.map((row: any) => (row?.text || "").trim())
           .filter((t: string) => t.length > 0) ?? [];
       
-      if (cleaned.length) {
-        setNoteSuggestions(cleaned);
+      if (topCleaned.length) {
+        setNoteSuggestions(topCleaned);
       } else {
         setNoteSuggestions(DEFAULT_NOTE_SUGGESTIONS);
       }
+
+      // Load all notes for datalist
+      const { data: allData } = await supabase
+        .from("note_presets")
+        .select("text")
+        .order("text");
+      
+      const allCleaned =
+        allData
+          ?.map((row: any) => (row?.text || "").trim())
+          .filter((t: string) => t.length > 0) ?? [];
+      
+      setAllNotes(allCleaned);
     } catch (err) {
       console.warn("Note presets load failed:", err);
       setNoteSuggestions(DEFAULT_NOTE_SUGGESTIONS);
@@ -665,7 +680,7 @@ function HomeContent() {
           className="full-width"
         />
         <datalist id="note-presets">
-          {noteSuggestions.map((suggestion) => (
+          {allNotes.map((suggestion) => (
             <option value={suggestion} key={`option-${suggestion}`} />
           ))}
         </datalist>

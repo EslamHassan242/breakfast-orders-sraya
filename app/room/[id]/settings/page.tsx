@@ -18,6 +18,8 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
   const [sellers, setSellers] = useState<any[]>([]);
   const [newSellerName, setNewSellerName] = useState("");
 
+  const DEFAULT_COVER = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&h=400&fit=crop";
+
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
@@ -35,7 +37,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
     
     if (data) {
       setRoomName(data.name || "Untitled Room");
-      setCoverUrl(data.cover_image_url || "");
+      setCoverUrl(data.cover_image_url || DEFAULT_COVER);
     }
   }
 
@@ -56,20 +58,79 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
     setSellers(data || []);
   }
 
+  async function compressImage(file: File): Promise<Blob> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set max dimensions (1200x400 for cover)
+          const maxWidth = 1200;
+          const maxHeight = 400;
+          let width = img.width;
+          let height = img.height;
+          
+          // Calculate aspect ratio
+          const aspectRatio = width / height;
+          
+          if (width > maxWidth) {
+            width = maxWidth;
+            height = width / aspectRatio;
+          }
+          
+          if (height > maxHeight) {
+            height = maxHeight;
+            width = height * aspectRatio;
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                resolve(blob);
+              } else {
+                reject(new Error('Canvas to Blob conversion failed'));
+              }
+            },
+            'image/jpeg',
+            0.85 // Quality 85%
+          );
+        };
+        img.onerror = reject;
+      };
+      reader.onerror = reject;
+    });
+  }
+
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     if (!e.target.files || e.target.files.length === 0) return;
     
     const file = e.target.files[0];
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${roomId}-${Date.now()}.${fileExt}`;
-    const filePath = `${fileName}`;
-
+    
     setUploading(true);
 
     try {
+      // Compress the image
+      const compressedBlob = await compressImage(file);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${roomId}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
       const { error: uploadError } = await supabase.storage
         .from('covers')
-        .upload(filePath, file);
+        .upload(filePath, compressedBlob, {
+          contentType: 'image/jpeg'
+        });
 
       if (uploadError) throw uploadError;
 
@@ -91,6 +152,22 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
       alert(`Upload failed: ${error.message}`);
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function removeCover() {
+    if (!confirm("Remove cover image and use default?")) return;
+    
+    const { error } = await supabase
+      .from("rooms")
+      .update({ cover_image_url: DEFAULT_COVER })
+      .eq("id", roomId);
+    
+    if (error) {
+      alert("Failed to remove cover");
+    } else {
+      setCoverUrl(DEFAULT_COVER);
+      alert("Cover removed!");
     }
   }
 
@@ -156,14 +233,22 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
         <h2 style={{ marginTop: 0 }}>🖼️ Cover Image</h2>
         <div style={{ marginBottom: 16 }}>
           <label style={{ display: "block", marginBottom: 8, fontWeight: 500 }}>Upload New Cover</label>
-          <input 
-            type="file" 
-            accept="image/*"
-            onChange={handleImageUpload}
-            disabled={uploading}
-            style={{ display: "block", width: "100%" }}
-          />
-          {uploading && <p style={{ color: "#666", fontSize: "0.9rem" }}>Uploading...</p>}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={handleImageUpload}
+              disabled={uploading}
+              style={{ flex: 1 }}
+            />
+            <button 
+              onClick={removeCover}
+              style={{ padding: "10px 16px", background: "#dc3545", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", whiteSpace: "nowrap" }}
+            >
+              Remove Cover
+            </button>
+          </div>
+          {uploading && <p style={{ color: "#666", fontSize: "0.9rem", marginTop: 8 }}>Compressing and uploading...</p>}
         </div>
         
         {coverUrl && (
