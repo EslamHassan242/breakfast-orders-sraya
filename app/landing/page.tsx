@@ -7,6 +7,7 @@ import {
   isValidRoomId,
   getRoomId,
 } from "@/lib/roomUtils";
+import { supabase } from "@/lib/supabaseClient";
 
 function LandingContent() {
   const router = useRouter();
@@ -24,8 +25,20 @@ function LandingContent() {
     return null;
   }
 
-  function handleCreateRoom() {
+  async function handleCreateRoom() {
     const roomId = generateRoomId();
+    
+    // Create room in Supabase
+    const { error } = await supabase
+      .from("rooms")
+      .insert([{ id: roomId }]);
+
+    if (error) {
+      console.error("Failed to create room:", error);
+      setError("Failed to create room. Please try again.");
+      return;
+    }
+
     setRoomId(roomId);
     setNewRoomId(roomId);
     router.push("/");

@@ -32,6 +32,8 @@ const DEFAULT_NOTE_SUGGESTIONS = [
   "أقل ملح",
 ];
 
+
+
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,6 +53,13 @@ function HomeContent() {
     DEFAULT_NOTE_SUGGESTIONS
   );
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [roomCover, setRoomCover] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
+
+  // Room Settings State
+  const [newCoverUrl, setNewCoverUrl] = useState("");
+  const [newMenuItem, setNewMenuItem] = useState({ name: "", price: "" });
+  const [newSellerName, setNewSellerName] = useState("");
 
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
@@ -129,11 +138,77 @@ function HomeContent() {
 
   useEffect(() => {
     if (!roomId) return;
+    loadRoomDetails();
     loadMenu();
     loadToday();
     loadSellersAndVotes();
     loadNoteSuggestions();
   }, [roomId]);
+
+  async function loadRoomDetails() {
+    if (!roomId) return;
+    const { data, error } = await supabase
+      .from("rooms")
+      .select("cover_image_url")
+      .eq("id", roomId)
+      .single();
+    
+    if (data) {
+      setRoomCover(data.cover_image_url);
+      setNewCoverUrl(data.cover_image_url || "");
+    }
+  }
+
+  async function updateRoomCover() {
+    if (!roomId) return;
+    const { error } = await supabase
+      .from("rooms")
+      .update({ cover_image_url: newCoverUrl })
+      .eq("id", roomId);
+    
+    if (error) {
+      alert("Failed to update cover image");
+    } else {
+      setRoomCover(newCoverUrl);
+      alert("Cover image updated!");
+    }
+  }
+
+  async function addRoomMenuItem() {
+    if (!roomId || !newMenuItem.name || !newMenuItem.price) return;
+    const { error } = await supabase.from("menu").insert([
+      {
+        name: newMenuItem.name,
+        price: Number(newMenuItem.price),
+        room_id: roomId
+      }
+    ]);
+
+    if (error) {
+      alert("Failed to add item");
+    } else {
+      setNewMenuItem({ name: "", price: "" });
+      loadMenu();
+    }
+  }
+
+  async function addRoomSeller() {
+    if (!roomId || !newSellerName.trim()) return;
+    const { error } = await supabase.from("sellers").insert([
+      {
+        name: newSellerName,
+        room_id: roomId
+      }
+    ]);
+
+    if (error) {
+      alert("Failed to add seller");
+    } else {
+      setNewSellerName("");
+      loadSellersAndVotes();
+    }
+  }
+
   async function loadNoteSuggestions() {
     setLoadingNotes(true);
     try {
@@ -162,9 +237,16 @@ function HomeContent() {
 
   // --- MENU + ORDERS ---
   async function loadMenu() {
-    const { data, error } = await supabase.from("menu").select("*").order("id");
+    // Load global items (room_id is null) AND room items
+    const { data, error } = await supabase
+      .from("menu")
+      .select("*")
+      .or(`room_id.is.null,room_id.eq.${roomId}`)
+      .order("id");
+
     if (error || !data) {
       console.error("Menu load failed:", error);
+      // Fallback only if DB fails completely
       const fallback = [
         { id: 1, name: "فول", price: 1.5 },
         { id: 2, name: "طعمية", price: 1.25 },
@@ -317,7 +399,13 @@ function HomeContent() {
   async function loadSellersAndVotes() {
     if (!roomId) return;
     setLoadingVotes(true);
-    const { data: sellersData } = await supabase.from("sellers").select("*");
+    
+    // Load global sellers AND room sellers
+    const { data: sellersData } = await supabase
+      .from("sellers")
+      .select("*")
+      .or(`room_id.is.null,room_id.eq.${roomId}`);
+      
     setSellers(sellersData || []);
 
     const today = new Date();
@@ -475,6 +563,13 @@ function HomeContent() {
               🔗 Share
             </button>
             <button
+              onClick={() => setShowSettings(!showSettings)}
+              className="secondary"
+              style={{ padding: "8px 16px", fontSize: "0.9rem" }}
+            >
+              ⚙️ Settings
+            </button>
+            <button
               onClick={handleLeaveRoom}
               style={{
                 background: "#dc3545",
@@ -488,8 +583,61 @@ function HomeContent() {
         </div>
       </div>
 
+      {/* Room Settings Panel */}
+      {showSettings && (
+        <div className="panel" style={{ border: "2px solid #b197fc" }}>
+          <h3>⚙️ Room Settings</h3>
+          
+          <div style={{ marginBottom: 20 }}>
+            <label>Cover Image URL</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input 
+                value={newCoverUrl} 
+                onChange={e => setNewCoverUrl(e.target.value)} 
+                placeholder="https://example.com/image.jpg"
+                style={{ flex: 1 }}
+              />
+              <button onClick={updateRoomCover}>Update</button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label>Add Menu Item (for this room)</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input 
+                placeholder="Item Name"
+                value={newMenuItem.name}
+                onChange={e => setNewMenuItem({...newMenuItem, name: e.target.value})}
+                style={{ flex: 2 }}
+              />
+              <input 
+                placeholder="Price"
+                type="number"
+                value={newMenuItem.price}
+                onChange={e => setNewMenuItem({...newMenuItem, price: e.target.value})}
+                style={{ flex: 1 }}
+              />
+              <button onClick={addRoomMenuItem}>Add</button>
+            </div>
+          </div>
+
+          <div>
+            <label>Add Seller (for this room)</label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <input 
+                placeholder="Seller Name"
+                value={newSellerName}
+                onChange={e => setNewSellerName(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <button onClick={addRoomSeller}>Add</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="cover">
-        <img src="/cover.jpg" alt="Sraya Breakfast Cover" />
+        <img src={roomCover || "/cover.jpg"} alt="Sraya Breakfast Cover" />
         <div className="cover-text">
           <h1>🥞 Sraya Breakfast Orders</h1>
         </div>
@@ -513,7 +661,7 @@ function HomeContent() {
         >
           {menu.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.name}
+              {m.name} {m.room_id ? "(Custom)" : ""}
             </option>
           ))}
         </select>
