@@ -18,7 +18,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
   const [sellers, setSellers] = useState<any[]>([]);
   const [newSellerName, setNewSellerName] = useState("");
 
-  const DEFAULT_COVER = "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&h=400&fit=crop";
+  const DEFAULT_COVER = "/cover.jpeg";
 
   const [uploading, setUploading] = useState(false);
 
@@ -261,7 +261,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
 
       {/* Menu Items */}
       <div className="panel" style={{ background: "#fff", padding: 20, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", marginBottom: 24 }}>
-        <h2 style={{ marginTop: 0 }}>🍔 Custom Menu Items</h2>
+        <h2 style={{ marginTop: 0 }}>🍔  Menu Items</h2>
         <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
           <input 
             value={newMenuItem.name}
@@ -286,13 +286,13 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
               <button onClick={() => deleteMenuItem(item.id)} style={{ color: "red", background: "none", border: "none", cursor: "pointer" }}>Delete</button>
             </div>
           ))}
-          {menuItems.length === 0 && <p style={{ color: "#999" }}>No custom items yet.</p>}
+          {menuItems.length === 0 && <p style={{ color: "#999" }}>No  items yet.</p>}
         </div>
       </div>
 
       {/* Sellers */}
       <div className="panel" style={{ background: "#fff", padding: 20, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", marginBottom: 24 }}>
-        <h2 style={{ marginTop: 0 }}>🏪 Custom Sellers</h2>
+        <h2 style={{ marginTop: 0 }}>🏪  Sellers</h2>
         <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
           <input 
             value={newSellerName}
@@ -310,7 +310,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
               <button onClick={() => deleteSeller(seller.id)} style={{ color: "red", background: "none", border: "none", cursor: "pointer" }}>Delete</button>
             </div>
           ))}
-          {sellers.length === 0 && <p style={{ color: "#999" }}>No custom sellers yet.</p>}
+          {sellers.length === 0 && <p style={{ color: "#999" }}>No  sellers yet.</p>}
         </div>
       </div>
     </div>

@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700&display=swap');
-
 :root {
   --bg: #f7f7f8;
   --panel: #fff;
@@ -10,7 +8,7 @@
   box-sizing: border-box;
 }
 body {
-  font-family: 'Cairo', var(--font-tajawal), "Tajawal", -apple-system, BlinkMacSystemFont,
+  font-family: var(--font-tajawal), "Tajawal", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
   background: var(--bg);
   margin: 0;

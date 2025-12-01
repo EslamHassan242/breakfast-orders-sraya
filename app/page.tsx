@@ -462,9 +462,10 @@ function HomeContent() {
     });
     setVoteCounts(counts);
 
-    const lastVote = localStorage.getItem("voted_date");
-    const todayKey = today.toDateString();
-    if (lastVote === todayKey) setVotedToday(true);
+    // Check if voted in THIS room today
+    const voteKey = `voted_${roomId}_${today.toDateString()}`;
+    const hasVoted = localStorage.getItem(voteKey) === "true";
+    setVotedToday(hasVoted);
 
     setLoadingVotes(false);
   }
@@ -497,7 +498,9 @@ function HomeContent() {
         return alert(`Vote failed: ${error.message}`);
       }
 
-      localStorage.setItem("voted_date", new Date().toDateString());
+      // Store vote per room
+      const voteKey = `voted_${roomId}_${new Date().toDateString()}`;
+      localStorage.setItem(voteKey, "true");
       setVotedToday(true);
       await loadSellersAndVotes();
     } catch (err) {
@@ -635,10 +638,10 @@ function HomeContent() {
       </div>
 
       <div className="cover">
-        <img src={roomCover || "/cover.jpg"} alt="Sraya Breakfast Cover" />
+        <img src={roomCover || "/cover.jpg"} alt="Breakfast Cover" />
         <div className="cover-text">
           <h1>{roomName}</h1>
-          <p style={{ margin: 0, opacity: 0.9 }}>🥞 Sraya Breakfast Orders</p>
+          <p style={{ margin: 0, opacity: 0.9 }}>🥞 Sharing Orders</p>
         </div>
       </div>
 
