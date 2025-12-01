@@ -208,9 +208,9 @@ function LandingContent() {
       `}</style>
 
       <div className="landing-card">
-        <div className="logo">🥞</div>
-        <h1>Breakfast Orders</h1>
-        <p>The easiest way to coordinate food & drinks with your team.</p>
+        <div className="logo">🔄</div>
+        <h1>OrderSync</h1>
+        <p>Sync your group's cravings in seconds.</p>
 
         {mode === "initial" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -273,13 +273,22 @@ function LandingContent() {
         {mode === "join" && (
           <div>
             <button className="back-btn" onClick={() => setMode("initial")}>← Back</button>
+            
+            <div className="input-group">
+              <label>Your Name</label>
+              <input 
+                placeholder="Enter your name" 
+                value={userName}
+                onChange={e => setUserName(e.target.value)}
+              />
+            </div>
+
             <div className="input-group">
               <label>Room ID</label>
               <input 
                 placeholder="Paste Room ID here" 
                 value={roomIdInput}
                 onChange={e => setRoomIdInput(e.target.value)}
-                autoFocus
               />
             </div>
             <button className="btn btn-primary" onClick={handleJoinRoom}>
@@ -291,7 +300,7 @@ function LandingContent() {
         {error && <div className="error">{error}</div>}
         
         <div style={{ marginTop: 30, fontSize: "0.8rem", color: "#999" }}>
-          Simple • Fast • Delicious
+          Simple • Fast • Synchronized
         </div>
       </div>
     </div>

@@ -57,6 +57,10 @@ function HomeContent() {
   const [roomName, setRoomName] = useState("");
   const [roomCover, setRoomCover] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Name editing state
+  const [editingName, setEditingName] = useState(false);
+  const [newName, setNewName] = useState("");
 
   const noteBadgeStyle: React.CSSProperties = {
     backgroundColor: "#fff7e6",
@@ -708,15 +712,56 @@ function HomeContent() {
         <img src={roomCover || "/cover.jpg"}  />
         <div className="cover-text">
           <h1>{roomName}</h1>
-          <p style={{ margin: 0, opacity: 0.9 }}>🥞 Sharing Orders</p>
+          <p style={{ margin: 0, opacity: 0.9 }}>🔄 OrderSync Room</p>
         </div>
       </div>
 
       {/* ORDER FORM */}
       <div className="panel">
         {/* Name input removed - using stored name */}
-        <div style={{ marginBottom: 16, color: "#666" }}>
-          Ordering as: <strong>{customer}</strong>
+        <div style={{ marginBottom: 16, color: "#666", display: "flex", alignItems: "center", gap: 8 }}>
+          <span>Ordering as:</span>
+          {editingName ? (
+            <div style={{ display: "flex", gap: 6 }}>
+              <input 
+                value={newName}
+                onChange={e => setNewName(e.target.value)}
+                style={{ padding: "4px 8px", borderRadius: 4, border: "1px solid #ddd", fontSize: "16px" }}
+                autoFocus
+              />
+              <button 
+                onClick={() => {
+                  if (newName.trim()) {
+                    setCustomer(newName.trim());
+                    localStorage.setItem("customerName", newName.trim());
+                    setEditingName(false);
+                  }
+                }}
+                style={{ background: "#2b7a78", color: "#fff", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer" }}
+              >
+                ✓
+              </button>
+              <button 
+                onClick={() => setEditingName(false)}
+                style={{ background: "#ccc", color: "#333", border: "none", borderRadius: 4, padding: "4px 8px", cursor: "pointer" }}
+              >
+                ✕
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <strong>{customer}</strong>
+              <button 
+                onClick={() => {
+                  setNewName(customer);
+                  setEditingName(true);
+                }}
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.9rem", color: "#2b7a78", textDecoration: "underline" }}
+              >
+                (change)
+              </button>
+            </div>
+          )}
         </div>
 
         <label>Item</label>
@@ -937,7 +982,7 @@ function HomeContent() {
       </div> */}
 
       <footer>
-        <small>Day By Day Order Sharing</small>
+        <small>OrderSync • Sync your group's cravings</small>
       </footer>
     </div>
   );

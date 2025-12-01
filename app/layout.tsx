@@ -9,8 +9,8 @@ const tajawal = Tajawal({
 });
 
 export const metadata: Metadata = {
-  title: "Sraya Breakfast Orders",
-  description: "Generate breakfast orders for Sraya ",
+  title: "OrderSync",
+  description: "Coordinate group orders in seconds.",
 };
 
 export default function RootLayout({
