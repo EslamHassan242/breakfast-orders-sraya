@@ -9,6 +9,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
   const { id: roomId } = use(params);
   
   const [roomName, setRoomName] = useState("");
+  const [editingName, setEditingName] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [newCoverUrl, setNewCoverUrl] = useState("");
   
@@ -37,7 +38,24 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
     
     if (data) {
       setRoomName(data.name || "Untitled Room");
+      setEditingName(data.name || "Untitled Room");
       setCoverUrl(data.cover_image_url || DEFAULT_COVER);
+    }
+  }
+
+  async function updateRoomName() {
+    if (!editingName.trim()) return alert("Room name cannot be empty");
+    
+    const { error } = await supabase
+      .from("rooms")
+      .update({ name: editingName.trim() })
+      .eq("id", roomId);
+    
+    if (error) {
+      alert("Failed to update room name");
+    } else {
+      setRoomName(editingName.trim());
+      alert("Room name updated!");
     }
   }
 
@@ -233,6 +251,25 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
       </div>
 
       <h1 style={{ marginBottom: 30 }}>⚙️ Settings: {roomName}</h1>
+
+      {/* Room Name */}
+      <div className="panel" style={{ background: "#fff", padding: 20, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", marginBottom: 24 }}>
+        <h2 style={{ marginTop: 0 }}>📝 Room Name</h2>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <input 
+            value={editingName}
+            onChange={e => setEditingName(e.target.value)}
+            placeholder="Room Name"
+            style={{ flex: 1, padding: 10, borderRadius: 6, border: "1px solid #ddd", fontSize: "16px" }}
+          />
+          <button 
+            onClick={updateRoomName}
+            style={{ padding: "10px 20px", background: "#2b7a78", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer", whiteSpace: "nowrap" }}
+          >
+            Update Name
+          </button>
+        </div>
+      </div>
 
       {/* Cover Image */}
       <div className="panel" style={{ background: "#fff", padding: 20, borderRadius: 12, boxShadow: "0 2px 8px rgba(0,0,0,0.1)", marginBottom: 24 }}>
