@@ -640,14 +640,14 @@ function HomeContent() {
         className="mobile-menu-btn"
         onClick={() => setIsMobileMenuOpen(true)}
       >
-        <span style={{ fontSize: "1.5rem" }}>☰</span>
+        <div className="hamburger-icon"></div>
       </button>
 
       {/* --- Mobile Menu Overlay --- */}
       <div className={`mobile-menu-overlay ${isMobileMenuOpen ? "open" : ""}`}>
         <button 
+          className="mobile-close-btn"
           onClick={() => setIsMobileMenuOpen(false)}
-          style={{ position: "absolute", top: 20, right: 20, background: "none", border: "none", fontSize: "2rem", cursor: "pointer" }}
         >
           ✕
         </button>
@@ -661,7 +661,7 @@ function HomeContent() {
         <Link href={`/room/${roomId}/settings`} className="mobile-nav-item" onClick={() => setIsMobileMenuOpen(false)}>
           ⚙️ Settings
         </Link>
-        <button className="mobile-nav-item" onClick={() => { handleLeaveRoom(); setIsMobileMenuOpen(false); }} style={{ color: "#dc3545" }}>
+        <button className="mobile-nav-item" onClick={() => { handleLeaveRoom(); setIsMobileMenuOpen(false); }} style={{ color: "#dc3545", background: "#fff5f5" }}>
           🚪 Leave Room
         </button>
       </div>
@@ -702,28 +702,12 @@ function HomeContent() {
         </div>
       </div>
 
-      {/* Room Info Banner */}
-      <div className="room-info-banner">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-          <div>
-            <div style={{ fontSize: "0.85rem", opacity: 0.8, textTransform: "uppercase", letterSpacing: "1px" }}>
-              Current Room
-            </div>
-            <code
-              style={{
-                fontSize: "1.2rem",
-                background: "rgba(0,0,0,0.2)",
-                padding: "4px 8px",
-                borderRadius: "8px",
-                border: "1px solid rgba(255,255,255,0.3)",
-                display: "inline-block",
-                wordBreak: "break-all",
-                fontWeight: 600
-              }}
-            >
-              {roomId}
-            </code>
-          </div>
+      {/* Room ID Card */}
+      <div className="room-id-card">
+        <div className="room-id-label">Current Room ID</div>
+        <div className="room-id-value">{roomId}</div>
+        <div style={{ fontSize: "0.9rem", color: "#666" }}>
+          Share this ID with your friends to join!
         </div>
       </div>
 
@@ -731,7 +715,7 @@ function HomeContent() {
         <img src={roomCover || "/cover.jpg"}  />
         <div className="cover-text">
           <h1>{roomName}</h1>
-          <p style={{ margin: 0, opacity: 0.9 }}>🔄 OrderSync Room</p>
+          <p style={{ margin: 0, opacity: 0.9 }}>🍔 OrderSync Room</p>
         </div>
       </div>
 
