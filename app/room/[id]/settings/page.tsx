@@ -15,6 +15,7 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
   
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [newMenuItem, setNewMenuItem] = useState({ name: "", price: "" });
+  const [editingMenuItem, setEditingMenuItem] = useState<{id: number, name: string, price: string} | null>(null);
   
   const [sellers, setSellers] = useState<any[]>([]);
   const [newSellerName, setNewSellerName] = useState("");
@@ -210,6 +211,27 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
     }
   }
 
+  async function updateMenuItem() {
+    if (!editingMenuItem) return;
+    if (!editingMenuItem.name || !editingMenuItem.price) return alert("Please enter name and price");
+    
+    const price = Number(editingMenuItem.price);
+    if (isNaN(price)) return alert("Invalid price");
+
+    const { error } = await supabase
+      .from("menu")
+      .update({ name: editingMenuItem.name, price: price })
+      .eq("id", editingMenuItem.id);
+
+    if (error) {
+      console.error("Update item failed:", error);
+      alert(`Failed to update item: ${error.message}`);
+    } else {
+      setEditingMenuItem(null);
+      loadMenu();
+    }
+  }
+
   async function deleteMenuItem(id: number) {
     if (!confirm("Delete this item?")) return;
     await supabase.from("menu").delete().eq("id", id);
@@ -325,8 +347,35 @@ export default function RoomSettings({ params }: { params: Promise<{ id: string 
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {menuItems.map(item => (
             <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px", background: "#f9f9f9", borderRadius: 6 }}>
-              <span>{item.name} - ${item.price}</span>
-              <button onClick={() => deleteMenuItem(item.id)} style={{ color: "red", background: "none", border: "none", cursor: "pointer" }}>Delete</button>
+              {editingMenuItem?.id === item.id ? (
+                <>
+                  <div style={{ display: "flex", gap: 8, flex: 1 }}>
+                    <input 
+                      value={editingMenuItem.name}
+                      onChange={e => setEditingMenuItem({...editingMenuItem, name: e.target.value})}
+                      style={{ flex: 2, padding: 8, borderRadius: 4, border: "1px solid #ddd", fontSize: "16px" }}
+                    />
+                    <input 
+                      type="number"
+                      value={editingMenuItem.price}
+                      onChange={e => setEditingMenuItem({...editingMenuItem, price: e.target.value})}
+                      style={{ flex: 1, padding: 8, borderRadius: 4, border: "1px solid #ddd", fontSize: "16px" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={updateMenuItem} style={{ color: "green", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✓ Save</button>
+                    <button onClick={() => setEditingMenuItem(null)} style={{ color: "#666", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✕ Cancel</button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span>{item.name} - ${item.price}</span>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setEditingMenuItem({id: item.id, name: item.name, price: String(item.price)})} style={{ color: "#2b7a78", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>✏️ Edit</button>
+                    <button onClick={() => deleteMenuItem(item.id)} style={{ color: "red", background: "none", border: "none", cursor: "pointer", padding: "4px 8px" }}>🗑️ Delete</button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
           {menuItems.length === 0 && <p style={{ color: "#999" }}>No  items yet.</p>}

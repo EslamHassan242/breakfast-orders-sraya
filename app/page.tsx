@@ -130,6 +130,8 @@ function HomeContent() {
     // First check URL query parameter (for sharing links)
     const roomIdFromQuery = searchParams.get("room");
     if (roomIdFromQuery && isValidRoomId(roomIdFromQuery)) {
+      // Clear stored name so new user is prompted for their name
+      localStorage.removeItem("customerName");
       storeRoomId(roomIdFromQuery); // Store in localStorage
       setRoomId(roomIdFromQuery); // Update React state
       router.replace("/"); // Clean URL
