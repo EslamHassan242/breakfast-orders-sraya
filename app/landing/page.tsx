@@ -27,12 +27,14 @@ function LandingContent() {
   }, []);
 
   // Check if redirected from main page with room_id in query
-  const roomIdFromQuery = searchParams.get("room");
-  if (roomIdFromQuery && isValidRoomId(roomIdFromQuery)) {
-    setRoomId(roomIdFromQuery);
-    router.replace("/");
-    return null;
-  }
+  useEffect(() => {
+    const roomIdFromQuery = searchParams.get("room");
+    if (roomIdFromQuery && isValidRoomId(roomIdFromQuery)) {
+      // Lobby Mode: Pre-fill room ID and ask for name
+      setMode("join");
+      setRoomIdInput(roomIdFromQuery);
+    }
+  }, [searchParams]);
 
   async function handleCreateRoom() {
     if (!userName.trim()) {

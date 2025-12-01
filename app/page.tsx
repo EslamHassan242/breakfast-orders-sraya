@@ -126,15 +126,22 @@ function HomeContent() {
   }, []);
 
   // Check for room ID on mount (from localStorage or URL query)
+  // Check for room ID on mount (from localStorage or URL query)
   useEffect(() => {
     // First check URL query parameter (for sharing links)
     const roomIdFromQuery = searchParams.get("room");
     if (roomIdFromQuery && isValidRoomId(roomIdFromQuery)) {
-      // Clear stored name so new user is prompted for their name
-      localStorage.removeItem("customerName");
-      storeRoomId(roomIdFromQuery); // Store in localStorage
-      setRoomId(roomIdFromQuery); // Update React state
-      router.replace("/"); // Clean URL
+      const storedName = localStorage.getItem("customerName");
+      
+      if (storedName) {
+        // User has a name -> Join immediately
+        storeRoomId(roomIdFromQuery);
+        setRoomId(roomIdFromQuery);
+        router.replace("/"); // Clean URL
+      } else {
+        // User has NO name -> Redirect to Lobby (Landing page)
+        router.push(`/landing?room=${roomIdFromQuery}`);
+      }
       return;
     }
 
